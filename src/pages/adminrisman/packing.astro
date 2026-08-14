@@ -1,0 +1,278 @@
+---
+import AdminLayout from '../../layouts/AdminLayout.astro';
+---
+
+<AdminLayout title="Packing (Pengemasan) — LaSayurku" activeModule="packing" allowedRoles={['packing_lasayurku', 'packing', 'kasir_lasayurku', 'kasir', 'administrator', 'admin']}>
+  <div class="flex h-full flex-col bg-slate-50">
+    <div class="border-b border-slate-200 bg-white px-6 py-4 flex items-center justify-between">
+      <div>
+        <h1 class="text-xl font-bold text-slate-900">Antrean Pengemasan (Packing)</h1>
+        <p class="text-sm text-slate-500">Pesanan yang sudah dibayar dan siap dikemas untuk pelanggan.</p>
+      </div>
+      <div class="flex items-center gap-2">
+        <button id="sound-toggle-btn" class="flex items-center gap-1.5 rounded-lg border border-blue-200 bg-blue-50 px-3 py-2 text-xs font-bold text-blue-700 hover:bg-blue-100 transition shadow-sm" title="Aktifkan / Matikan Notifikasi Suara">
+          <span id="sound-icon">🔔</span>
+          <span id="sound-status-text">Suara ON</span>
+        </button>
+
+        <button id="test-sound-btn" class="flex items-center gap-1.5 rounded-lg border border-slate-200 bg-white px-3 py-2 text-xs font-bold text-slate-700 hover:bg-slate-50 transition shadow-sm" title="Uji Coba Bunyi Notifikasi">
+          🔊 Tes Bunyi
+        </button>
+
+        <button id="refresh-btn" class="flex items-center gap-2 rounded-lg bg-emerald-100 px-4 py-2 text-sm font-semibold text-emerald-700 hover:bg-emerald-200 transition">
+          <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" />
+          </svg>
+          Segarkan
+        </button>
+      </div>
+    </div>
+
+    <div class="flex-1 overflow-auto p-6">
+      <div id="loading-state" class="flex flex-col items-center justify-center py-20 text-emerald-600">
+        <svg class="w-10 h-10 animate-spin mb-4" fill="none" viewBox="0 0 24 24">
+          <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
+          <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+        </svg>
+        <p class="font-medium text-slate-500">Memuat pesanan...</p>
+      </div>
+
+      <div id="empty-state" class="hidden flex-col items-center justify-center py-20 text-center">
+        <div class="w-16 h-16 bg-slate-100 rounded-full flex items-center justify-center text-slate-400 mb-4">
+          <svg class="w-8 h-8" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M20 7l-8-4-8 4m16 0l-8 4m8-4v10l-8 4m0-10L4 7m8 4v10M4 7v10l8 4" />
+          </svg>
+        </div>
+        <h3 class="text-lg font-bold text-slate-900">Semua pesanan sudah dikemas!</h3>
+        <p class="text-sm text-slate-500">Tunggu pesanan baru yang dikonfirmasi oleh kasir.</p>
+      </div>
+
+      <div id="orders-grid" class="hidden grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
+        <!-- Dimasukkan lewat JS -->
+      </div>
+    </div>
+  </div>
+
+  <script is:inline>
+    let isFetching = false;
+    let previousOrderCount = -1;
+    let isSoundEnabled = true;
+
+    function playNotificationChime() {
+      if (!isSoundEnabled) return;
+      try {
+        const AudioContext = window.AudioContext || window.webkitAudioContext;
+        if (!AudioContext) return;
+        const ctx = new AudioContext();
+        
+        const playTone = (freq, startTime, duration) => {
+          const osc = ctx.createOscillator();
+          const gain = ctx.createGain();
+          osc.type = 'sine';
+          osc.frequency.setValueAtTime(freq, ctx.currentTime + startTime);
+          
+          gain.gain.setValueAtTime(0, ctx.currentTime + startTime);
+          gain.gain.linearRampToValueAtTime(0.3, ctx.currentTime + startTime + 0.05);
+          gain.gain.exponentialRampToValueAtTime(0.001, ctx.currentTime + startTime + duration);
+          
+          osc.connect(gain);
+          gain.connect(ctx.destination);
+          
+          osc.start(ctx.currentTime + startTime);
+          osc.stop(ctx.currentTime + startTime + duration);
+        };
+
+        // Play pleasant 3-tone notification chime
+        playTone(523.25, 0, 0.2);   // C5
+        playTone(659.25, 0.12, 0.2); // E5
+        playTone(783.99, 0.24, 0.4); // G5
+      } catch (e) {
+        console.error('Sound play error:', e);
+      }
+    }
+
+    async function fetchOrders() {
+      if (isFetching) return;
+      isFetching = true;
+
+      const loadingEl = document.getElementById('loading-state');
+      const emptyEl = document.getElementById('empty-state');
+      const gridEl = document.getElementById('orders-grid');
+      
+      try {
+        const res = await fetch('/api/adminrisman/orders?status=processing');
+        const data = await res.json();
+
+        if (data.success) {
+          // Hanya tampilkan pesanan yang belum memiliki meta 'packing_status' = 'packed'
+          const ordersToPack = data.orders.filter(order => {
+            if (!order.meta_data) return true;
+            return !order.meta_data.some(m => m.key === 'packing_status' && m.value === 'packed');
+          });
+
+          // Bunyikan notifikasi jika ada pesanan baru masuk
+          if (previousOrderCount !== -1 && ordersToPack.length > previousOrderCount) {
+            playNotificationChime();
+          }
+          previousOrderCount = ordersToPack.length;
+
+          gridEl.innerHTML = '';
+
+          if (ordersToPack.length > 0) {
+            loadingEl.classList.add('hidden');
+            loadingEl.classList.remove('flex');
+            emptyEl.classList.add('hidden');
+            emptyEl.classList.remove('flex');
+            gridEl.classList.remove('hidden');
+
+            ordersToPack.forEach(order => {
+              const date = new Date(order.date_created).toLocaleString('id-ID', { dateStyle: 'medium', timeStyle: 'short' });
+              
+              const div = document.createElement('div');
+              div.className = 'bg-white border border-blue-200 rounded-2xl p-5 shadow-sm flex flex-col justify-between relative overflow-hidden';
+              div.innerHTML = `
+                <div class="absolute top-0 left-0 w-1 h-full bg-blue-500"></div>
+                <div class="pl-2">
+                  <div class="flex justify-between items-start mb-4">
+                    <div>
+                      <h3 class="font-bold text-slate-900">${order.number}</h3>
+                      <p class="text-xs text-slate-500">${date}</p>
+                    </div>
+                    <span class="px-2.5 py-1 bg-blue-100 text-blue-700 text-[10px] font-bold rounded-full uppercase">
+                      SIAP KEMAS
+                    </span>
+                  </div>
+                  
+                  <div class="mb-4 text-sm text-slate-700">
+                    <div class="font-semibold mb-1 text-blue-900">${order.delivery_type}</div>
+                    <div class="font-medium">${order.customer_name}</div>
+                    ${order.customer_note ? `<div class="mt-2 bg-amber-50 border border-amber-200 text-amber-800 text-xs p-2 rounded-lg font-medium">Catatan: ${order.customer_note}</div>` : ''}
+                  </div>
+
+                  <div class="border-t border-slate-100 pt-3 mb-4">
+                    <div class="text-xs text-slate-500 mb-2 font-bold uppercase tracking-wider">Barang untuk dikemas:</div>
+                    <ul class="text-sm space-y-2 text-slate-700">
+                      ${order.line_items.map(item => `
+                        <li class="flex items-start gap-2">
+                          <input type="checkbox" class="mt-1 w-4 h-4 text-emerald-600 rounded border-gray-300 focus:ring-emerald-500" />
+                          <span>${item.name} <strong class="text-slate-900 bg-slate-100 px-1 rounded">x${item.quantity}</strong></span>
+                        </li>
+                      `).join('')}
+                    </ul>
+                  </div>
+                </div>
+                
+                <div class="pt-4 border-t border-slate-100 flex items-center justify-between pl-2">
+                  <span class="text-xs text-slate-400">Total: Rp ${Number(order.total).toLocaleString('id-ID')}</span>
+                  <button data-pack="${order.id}" class="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-xl text-sm font-semibold transition shadow-md shadow-blue-600/20 active:scale-95">
+                    Selesai Dikemas
+                  </button>
+                </div>
+              `;
+              gridEl.appendChild(div);
+            });
+          } else {
+            loadingEl.classList.add('hidden');
+            loadingEl.classList.remove('flex');
+            gridEl.classList.add('hidden');
+            emptyEl.classList.remove('hidden');
+            emptyEl.classList.add('flex');
+          }
+        }
+      } catch (err) {
+        console.error('Fetch error:', err);
+        loadingEl.innerHTML = `<p class="text-red-500">Gagal mengambil data.</p>`;
+      } finally {
+        isFetching = false;
+      }
+    }
+
+    document.addEventListener('DOMContentLoaded', () => {
+      fetchOrders();
+
+      // Sound toggle listener
+      const soundBtn = document.getElementById('sound-toggle-btn');
+      const soundIcon = document.getElementById('sound-icon');
+      const soundText = document.getElementById('sound-status-text');
+      const testSoundBtn = document.getElementById('test-sound-btn');
+
+      if (soundBtn) {
+        soundBtn.addEventListener('click', () => {
+          isSoundEnabled = !isSoundEnabled;
+          if (isSoundEnabled) {
+            soundIcon.textContent = '🔔';
+            soundText.textContent = 'Suara ON';
+            soundBtn.className = 'flex items-center gap-1.5 rounded-lg border border-blue-200 bg-blue-50 px-3 py-2 text-xs font-bold text-blue-700 hover:bg-blue-100 transition shadow-sm';
+            playNotificationChime();
+          } else {
+            soundIcon.textContent = '🔕';
+            soundText.textContent = 'Suara OFF';
+            soundBtn.className = 'flex items-center gap-1.5 rounded-lg border border-slate-200 bg-slate-100 px-3 py-2 text-xs font-bold text-slate-500 hover:bg-slate-200 transition shadow-sm';
+          }
+        });
+      }
+
+      if (testSoundBtn) {
+        testSoundBtn.addEventListener('click', () => {
+          isSoundEnabled = true;
+          if (soundIcon && soundText) {
+            soundIcon.textContent = '🔔';
+            soundText.textContent = 'Suara ON';
+          }
+          playNotificationChime();
+        });
+      }
+
+      document.getElementById('refresh-btn')?.addEventListener('click', fetchOrders);
+
+      // Auto-refresh every 15 seconds for real-time notification
+      setInterval(fetchOrders, 15000);
+
+      document.getElementById('orders-grid')?.addEventListener('click', async (e) => {
+        const btn = e.target.closest('button[data-pack]');
+        if (!btn) return;
+        
+        // Pengecekan apakah semua barang sudah diceklis
+        const card = btn.closest('div.bg-white');
+        const checkboxes = card.querySelectorAll('input[type="checkbox"]');
+        const allChecked = Array.from(checkboxes).every(cb => cb.checked);
+        
+        if (!allChecked) {
+          if (!confirm('Ada barang yang belum diceklis! Anda yakin pesanan sudah lengkap dikemas?')) {
+            return;
+          }
+        }
+        
+        const orderId = btn.getAttribute('data-pack');
+        const originalText = btn.textContent;
+        btn.textContent = 'Menyimpan...';
+        btn.disabled = true;
+
+        try {
+          // Status tetap processing, tapi ditambah meta_data packing_status = packed
+          const res = await fetch('/api/adminrisman/orders', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ 
+              orderId, 
+              status: 'processing',
+              meta_data: [{ key: 'packing_status', value: 'packed' }]
+            })
+          });
+          
+          if (res.ok) {
+            fetchOrders();
+          } else {
+            alert('Gagal memperbarui status packing');
+            btn.textContent = originalText;
+            btn.disabled = false;
+          }
+        } catch (err) {
+          alert('Terjadi kesalahan jaringan');
+          btn.textContent = originalText;
+          btn.disabled = false;
+        }
+      });
+    });
+  </script>
+</AdminLayout>

@@ -1,0 +1,522 @@
+---
+import Layout from "../layouts/Layout.astro";
+---
+
+<Layout title="Masuk / Daftar — LaSayurku">
+  <main class="mx-auto max-w-md px-4 py-12">
+    <!-- Tab navigation -->
+    <div id="tab-nav" class="mb-8 flex justify-center border-b border-gray-200">
+      <button
+        id="tab-login"
+        class="px-6 py-3 font-semibold text-brand border-b-2 border-brand"
+        >Masuk</button
+      >
+      <button
+        id="tab-register"
+        class="px-6 py-3 font-semibold text-gray-500 hidden"
+        >Daftar</button
+      >
+    </div>
+
+    <!-- Login Form -->
+    <div id="login-form-container">
+      <h1 class="mb-6 text-2xl font-bold text-center">
+        Selamat Datang Kembali
+      </h1>
+      <form id="login-form" class="flex flex-col gap-4">
+        <div>
+          <label class="block text-sm font-medium text-gray-700 mb-1"
+            >Email atau Username</label
+          >
+          <input
+            type="text"
+            name="username"
+            id="email"
+            required
+            class="w-full rounded-xl border border-gray-300 px-4 py-2.5 focus:border-brand focus:outline-none focus:ring-1 focus:ring-brand"
+          />
+        </div>
+        <div>
+          <div class="flex justify-between items-end mb-1">
+            <label class="block text-sm font-medium text-gray-700"
+              >Password</label
+            >
+            <button
+              type="button"
+              id="forgot-password-btn"
+              class="text-xs font-semibold text-brand hover:text-brand-dark transition-colors"
+              >Lupa Password?</button
+            >
+          </div>
+          <div class="relative">
+            <input
+              type="password"
+              name="password"
+              id="password"
+              required
+              class="w-full rounded-xl border border-gray-300 px-4 py-2.5 pr-12 focus:border-brand focus:outline-none focus:ring-1 focus:ring-brand"
+            />
+            <button
+              type="button"
+              class="toggle-password absolute inset-y-0 right-0 flex items-center pr-4 text-gray-400 hover:text-gray-600 focus:outline-none"
+            >
+              <svg
+                xmlns="http://www.w3.org/2000/svg"
+                fill="none"
+                viewBox="0 0 24 24"
+                stroke-width="1.5"
+                stroke="currentColor"
+                class="w-5 h-5 eye-icon"
+              >
+                <path
+                  stroke-linecap="round"
+                  stroke-linejoin="round"
+                  d="M2.036 12.322a1.012 1.012 0 010-.639C3.423 7.51 7.36 4.5 12 4.5c4.638 0 8.573 3.007 9.963 7.178.07.207.07.431 0 .639C20.577 16.49 16.64 19.5 12 19.5c-4.638 0-8.573-3.007-9.963-7.178z"
+                ></path>
+                <path
+                  stroke-linecap="round"
+                  stroke-linejoin="round"
+                  d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"></path>
+              </svg>
+            </button>
+          </div>
+        </div>
+        <div
+          id="login-error"
+          class="hidden rounded-lg bg-red-50 p-3 text-sm text-red-600"
+        >
+        </div>
+        <button
+          type="submit"
+          class="mt-2 w-full rounded-full bg-brand py-3 font-semibold text-white hover:bg-brand-dark disabled:opacity-50"
+          >Masuk Sekarang</button
+        >
+      </form>
+    </div>
+
+    <!-- Register Form (hidden for admin access) -->
+    <div id="register-form-container" class="hidden">
+      <h1 class="mb-6 text-2xl font-bold text-center">
+        Buat Akun Baru
+      </h1>
+      <form id="register-form" class="flex flex-col gap-4">
+        <div>
+          <label class="block text-sm font-medium text-gray-700 mb-1"
+            >Nama Lengkap</label
+          >
+          <input
+            type="text"
+            name="name"
+            required
+            class="w-full rounded-xl border border-gray-300 px-4 py-2.5 focus:border-brand focus:outline-none focus:ring-1 focus:ring-brand"
+          />
+        </div>
+        <div>
+          <label class="block text-sm font-medium text-gray-700 mb-1"
+            >No. HP (WhatsApp)</label
+          >
+          <input
+            type="text"
+            name="email"
+            required
+            class="w-full rounded-xl border border-gray-300 px-4 py-2.5 focus:border-brand focus:outline-none focus:ring-1 focus:ring-brand"
+          />
+        </div>
+        <div>
+          <label class="block text-sm font-medium text-gray-700 mb-1"
+            >Password</label
+          >
+          <div class="relative">
+            <input
+              type="password"
+              name="password"
+              required
+              class="w-full rounded-xl border border-gray-300 px-4 py-2.5 pr-12 focus:border-brand focus:outline-none focus:ring-1 focus:ring-brand"
+            />
+            <button
+              type="button"
+              class="toggle-password absolute inset-y-0 right-0 flex items-center pr-4 text-gray-400 hover:text-gray-600 focus:outline-none"
+            >
+              <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" class="w-5 h-5 eye-icon">
+                <path stroke-linecap="round" stroke-linejoin="round" d="M2.036 12.322a1.012 1.012 0 010-.639C3.423 7.51 7.36 4.5 12 4.5c4.638 0 8.573 3.007 9.963 7.178.07.207.07.431 0 .639C20.577 16.49 16.64 19.5 12 19.5c-4.638 0-8.573-3.007-9.963-7.178z"></path>
+                <path stroke-linecap="round" stroke-linejoin="round" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"></path>
+              </svg>
+            </button>
+          </div>
+        </div>
+        <div>
+          <label class="block text-sm font-medium text-gray-700 mb-1"
+            >Konfirmasi Password</label
+          >
+          <div class="relative">
+            <input
+              type="password"
+              name="confirmPassword"
+              required
+              class="w-full rounded-xl border border-gray-300 px-4 py-2.5 pr-12 focus:border-brand focus:outline-none focus:ring-1 focus:ring-brand"
+            />
+            <button
+              type="button"
+              class="toggle-password absolute inset-y-0 right-0 flex items-center pr-4 text-gray-400 hover:text-gray-600 focus:outline-none"
+            >
+              <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" class="w-5 h-5 eye-icon">
+                <path stroke-linecap="round" stroke-linejoin="round" d="M2.036 12.322a1.012 1.012 0 010-.639C3.423 7.51 7.36 4.5 12 4.5c4.638 0 8.573 3.007 9.963 7.178.07.207.07.431 0 .639C20.577 16.49 16.64 19.5 12 19.5c-4.638 0-8.573-3.007-9.963-7.178z"></path>
+                <path stroke-linecap="round" stroke-linejoin="round" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"></path>
+              </svg>
+            </button>
+          </div>
+        </div>
+        <div
+          id="register-error"
+          class="hidden rounded-lg bg-red-50 p-3 text-sm text-red-600"
+        >
+        </div>
+        <button
+          type="submit"
+          class="mt-2 w-full rounded-full bg-brand py-3 font-semibold text-white hover:bg-brand-dark disabled:opacity-50"
+          >Daftar Akun Baru</button
+        >
+      </form>
+    </div>
+  </main>
+</Layout>
+
+<script>
+  import {
+    setAdminSession,
+    setPosAuthCookies,
+  } from '../lib/adminAuth';
+  import { resolveRoleFromLoginHints } from '../lib/posAuth';
+
+  // Hanya bersihkan session umum di halaman login; token POS offline/online tetap terpisah
+  (function clearLegacySessionOnLoginPage() {
+    localStorage.removeItem('auth_token');
+    localStorage.removeItem('user_token');
+    localStorage.removeItem('admin_token');
+    localStorage.removeItem('user_role');
+    localStorage.removeItem('admin_user_role');
+    document.cookie = 'auth_token=; expires=Thu, 01 Jan 1970 00:00:00 UTC; path=/;';
+    document.cookie = 'user_token=; expires=Thu, 01 Jan 1970 00:00:00 UTC; path=/;';
+    document.cookie = 'admin_token=; expires=Thu, 01 Jan 1970 00:00:00 UTC; path=/;';
+  })();
+
+  document.addEventListener("DOMContentLoaded", () => {
+    const tabLogin = document.getElementById("tab-login");
+    const tabRegister = document.getElementById("tab-register");
+    const loginContainer = document.getElementById("login-form-container");
+    const registerContainer = document.getElementById(
+      "register-form-container",
+    );
+
+    const loginForm = document.getElementById("login-form") as HTMLFormElement;
+    const registerForm = document.getElementById(
+      "register-form",
+    ) as HTMLFormElement;
+    const loginError = document.getElementById("login-error");
+    const registerError = document.getElementById("register-error");
+
+    // Deteksi apakah berasal dari halaman admin (query param ?from=admin)
+    const urlParams = new URLSearchParams(window.location.search);
+    const fromAdmin = urlParams.get("from") === "admin";
+    const accessDenied = urlParams.get("error") === "denied";
+
+    if (accessDenied && loginError) {
+      loginError.textContent =
+        "Akses Ditolak: Anda tidak memiliki izin untuk halaman tersebut.";
+      loginError.classList.remove("hidden");
+    }
+
+    // Jika BUKAN dari admin, tampilkan tab Daftar
+    if (!fromAdmin && tabRegister) {
+      tabRegister.classList.remove("hidden");
+    }
+
+    if (!tabLogin || !loginContainer)
+      return;
+
+    // Tab Switching
+    tabLogin.addEventListener("click", () => {
+      loginContainer.classList.remove("hidden");
+      if (registerContainer) registerContainer.classList.add("hidden");
+
+      tabLogin.classList.add("text-brand", "border-b-2", "border-brand");
+      tabLogin.classList.remove("text-gray-500");
+
+      if (tabRegister) {
+        tabRegister.classList.remove("text-brand", "border-b-2", "border-brand");
+        tabRegister.classList.add("text-gray-500");
+      }
+    });
+
+    if (tabRegister && registerContainer) {
+      tabRegister.addEventListener("click", () => {
+        registerContainer.classList.remove("hidden");
+        loginContainer.classList.add("hidden");
+
+        tabRegister.classList.add("text-brand", "border-b-2", "border-brand");
+        tabRegister.classList.remove("text-gray-500");
+
+        tabLogin.classList.remove("text-brand", "border-b-2", "border-brand");
+        tabLogin.classList.add("text-gray-500");
+      });
+    }
+
+    // Toggle Password Visibility
+    document.querySelectorAll(".toggle-password").forEach((btn) => {
+      btn.addEventListener("click", (e) => {
+        const input = btn.previousElementSibling as HTMLInputElement;
+        const icon = btn.querySelector(".eye-icon");
+        if (input && input.type === "password") {
+          input.type = "text";
+          if (icon) {
+            icon.innerHTML =
+              '<path stroke-linecap="round" stroke-linejoin="round" d="M3.98 8.223A10.477 10.477 0 001.934 12C3.226 16.338 7.244 19.5 12 19.5c.993 0 1.953-.138 2.863-.395M6.228 6.228A10.45 10.45 0 0112 4.5c4.756 0 8.773 3.162 10.065 7.498a10.523 10.523 0 01-4.293 5.774M6.228 6.228L3 3m3.228 3.228l3.65 3.65m7.894 7.894L21 21m-3.228-3.228l-3.65-3.65m0 0a3 3 0 10-4.243-4.243m4.242 4.242L9.88 9.88" />';
+          }
+        } else if (input) {
+          input.type = "password";
+          if (icon) {
+            icon.innerHTML =
+              '<path stroke-linecap="round" stroke-linejoin="round" d="M2.036 12.322a1.012 1.012 0 010-.639C3.423 7.51 7.36 4.5 12 4.5c4.638 0 8.573 3.007 9.963 7.178.07.207.07.431 0 .639C20.577 16.49 16.64 19.5 12 19.5c-4.638 0-8.573-3.007-9.963-7.178z" /><path stroke-linecap="round" stroke-linejoin="round" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />';
+          }
+        }
+      });
+    });
+
+    // Lupa Password Handler
+    const forgotPasswordBtn = document.getElementById("forgot-password-btn");
+    if (forgotPasswordBtn) {
+      forgotPasswordBtn.addEventListener("click", async () => {
+        const username = prompt(
+          "Masukkan Email atau Username Anda untuk dikirimkan link reset password:",
+        );
+        if (!username) return;
+
+        forgotPasswordBtn.textContent = "Mengirim...";
+        forgotPasswordBtn.classList.add("opacity-50", "pointer-events-none");
+
+        try {
+          const res = await fetch("/api/auth/forgot-password", {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ email: username.trim() }),
+          });
+          const data = await res.json();
+          if (loginError) {
+            loginError.textContent =
+              data.message || "Link reset password telah dikirim.";
+            loginError.classList.remove("hidden");
+            loginError.classList.remove("bg-red-50", "text-red-600");
+            loginError.classList.add("bg-green-50", "text-green-600");
+          }
+        } catch (err: any) {
+          if (loginError) {
+            loginError.textContent =
+              "Terjadi kesalahan jaringan saat meminta reset password.";
+            loginError.classList.remove("hidden");
+            loginError.classList.remove("bg-green-50", "text-green-600");
+            loginError.classList.add("bg-red-50", "text-red-600");
+          }
+        } finally {
+          forgotPasswordBtn.textContent = "Lupa Password?";
+          forgotPasswordBtn.classList.remove(
+            "opacity-50",
+            "pointer-events-none",
+          );
+        }
+      });
+    }
+
+    // 2. CLIENT-SIDE FORM SUBMISSION HANDLER -> PAKSA REDIRECT KE /adminrisman/kasir ATAU /adminrisman
+    if (loginForm) {
+      loginForm.addEventListener("submit", async (e) => {
+        e.preventDefault();
+        const formData = new FormData(loginForm);
+        const username = formData.get("username") || formData.get("email");
+        const password = formData.get("password");
+
+        const submitBtn = loginForm.querySelector(
+          'button[type="submit"]',
+        ) as HTMLButtonElement;
+        if (submitBtn) {
+          submitBtn.disabled = true;
+          submitBtn.textContent = "Memproses...";
+        }
+        if (loginError) loginError.classList.add("hidden");
+
+        try {
+          const res = await fetch("/api/auth/login", {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ username, password }),
+          });
+          const data = await res.json();
+          console.log('🔍 login API response:', data);
+
+          if (res.ok || data.token || data.success) {
+            const tokenVal = data.token || "dummy_auth_token";
+            const rawRole = data.user_role || data.roles || data.role || "";
+            const roleStr = (Array.isArray(rawRole) ? rawRole[0] : rawRole)
+              .toString()
+              .toLowerCase()
+              .trim();
+
+            const usernameStr = String(username || "");
+            const normalizedRole = resolveRoleFromLoginHints(roleStr, usernameStr);
+            const roleVal =
+              normalizedRole !== "pelanggan"
+                ? normalizedRole
+                : roleStr || "pelanggan";
+
+            const nicename = data.user_nicename || usernameStr || "Pengguna";
+            const email = data.user_email || usernameStr || "";
+
+            setAdminSession({
+              token: tokenVal,
+              role: roleVal,
+              user_nicename: nicename,
+              user_email: email,
+            });
+            setPosAuthCookies({
+              token: tokenVal,
+              role: roleVal,
+              user_nicename: nicename,
+              user_email: email,
+            });
+
+            if (data.customer_id)
+              localStorage.setItem("user_id", data.customer_id.toString());
+            else if (data.user_id)
+              localStorage.setItem("user_id", data.user_id.toString());
+
+            sessionStorage.setItem("pos_pin_verified", "true");
+
+            const finalRole = (data.user_role?.toString().toLowerCase() || roleVal).trim();
+
+            if (finalRole.includes("kurir") || roleVal === "kurir") {
+              window.location.href = "/adminrisman/kurir";
+            } else if (finalRole.includes("packing") || roleVal === "packing") {
+              window.location.href = "/adminrisman/packing";
+            } else if (
+              finalRole.includes("admin") ||
+              finalRole === "administrator" ||
+              roleVal === "administrator"
+            ) {
+              window.location.href = "/adminrisman";
+            } else if (roleVal === "kasir_offline") {
+              window.location.href = "/adminrisman/kasiroffline";
+            } else if (roleVal === "kasir") {
+              window.location.href = "/adminrisman/kasir";
+            } else {
+              window.location.href = "/";
+            }
+          } else {
+            throw new Error(
+              data.message || "Gagal masuk. Periksa kembali kredensial Anda.",
+            );
+          }
+        } catch (err: any) {
+          if (loginError) {
+            loginError.textContent = err.message || "Login gagal";
+            loginError.classList.remove("hidden");
+            loginError.classList.remove("bg-green-50", "text-green-600");
+            loginError.classList.add("bg-red-50", "text-red-600");
+          }
+        } finally {
+          if (submitBtn) {
+            submitBtn.disabled = false;
+            submitBtn.textContent = "Masuk Sekarang";
+          }
+        }
+      });
+    }
+
+    // Register Form Submit
+    if (registerForm) {
+      registerForm.addEventListener("submit", async (e) => {
+        e.preventDefault();
+
+        const formData = new FormData(registerForm);
+        const submitBtn = registerForm.querySelector(
+          'button[type="submit"]',
+        ) as HTMLButtonElement;
+
+        if (registerError) registerError.classList.add("hidden");
+
+        if (formData.get("password") !== formData.get("confirmPassword")) {
+          if (registerError) {
+            registerError.textContent = "Konfirmasi password tidak cocok.";
+            registerError.classList.remove("hidden");
+          }
+          return;
+        }
+
+        if (submitBtn) {
+          submitBtn.disabled = true;
+          submitBtn.textContent = "Memproses...";
+        }
+
+        try {
+          let emailOrPhone = formData.get("email") as string;
+          if (!emailOrPhone.includes("@")) {
+            const safePhone = emailOrPhone.replace(/[^0-9]/g, "");
+            formData.set("email", `${safePhone}@wa.lasayurku.com`);
+          }
+
+          const res = await fetch("/api/auth/register", {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify(Object.fromEntries(formData)),
+          });
+          const data = await res.json();
+
+          if (!res.ok) {
+            throw new Error(data.message || "Gagal mendaftar");
+          }
+
+          const loginRes = await fetch("/api/auth/login", {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({
+              username: formData.get("email"),
+              password: formData.get("password"),
+            }),
+          });
+
+          if (loginRes.ok) {
+            const loginData = await loginRes.json();
+            const tokenVal = loginData.token || "dummy_auth_token";
+            const roleVal = "pelanggan";
+            
+            setAdminSession({
+              token: tokenVal,
+              role: roleVal,
+              user_nicename: formData.get("email") as string,
+              user_email: formData.get("email") as string,
+            });
+            setPosAuthCookies({
+              token: tokenVal,
+              role: roleVal,
+              user_nicename: formData.get("email") as string,
+              user_email: formData.get("email") as string,
+            });
+
+            window.location.href = "/";
+          } else {
+            tabLogin?.click();
+            alert("Pendaftaran berhasil! Silakan masuk dengan akun baru Anda.");
+          }
+        } catch (err: any) {
+          if (registerError) {
+            registerError.textContent = err.message;
+            registerError.classList.remove("hidden");
+          }
+        } finally {
+          if (submitBtn) {
+            submitBtn.disabled = false;
+            submitBtn.textContent = "Daftar Akun Baru";
+          }
+        }
+      });
+    }
+  });
+</script>

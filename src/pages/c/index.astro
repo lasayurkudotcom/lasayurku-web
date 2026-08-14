@@ -1,0 +1,8 @@
+---
+export const prerender = false;
+
+const isKategoriPath = Astro.url.pathname.replace(/\/$/, '') === '/c';
+if (isKategoriPath) {
+  throw Astro.redirect('/c/sayuran');
+}
+---

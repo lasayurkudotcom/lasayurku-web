@@ -1,0 +1,419 @@
+---
+import '../styles/global.css';
+
+interface Props {
+  title?: string;
+  activeModule?: 'dashboard' | 'kasir' | 'packing' | 'kurir';
+  allowedRoles?: string[];
+  /** Batasi session ke kasir online/offline agar token tidak tercampur */
+  posContext?: 'online' | 'offline' | 'staff';
+}
+
+const {
+  title = 'LaSayurku POS — Dashboard Admin & Kasir',
+  activeModule = 'kasir',
+  allowedRoles = ['kasir_lasayurku', 'administrator'],
+  posContext = 'staff',
+} = Astro.props;
+---
+
+<html lang="id" class="h-full bg-slate-50 text-slate-800 antialiased selection:bg-emerald-500 selection:text-white">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <link rel="icon" type="image/webp" href="/logo.webp" />
+    <title>{title}</title>
+    <meta name="robots" content="noindex, nofollow" />
+
+    <!-- Google Fonts for clean Modern UI -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;500;600;700&display=swap" rel="stylesheet">
+
+    <style is:global>
+      body {
+        font-family: 'Plus Jakarta Sans', -apple-system, BlinkMacSystemFont, sans-serif;
+      }
+      .font-mono-receipt {
+        font-family: 'JetBrains Mono', monospace;
+      }
+
+      /* Scrollbar Customization for Admin POS */
+      ::-webkit-scrollbar {
+        width: 6px;
+        height: 6px;
+      }
+      ::-webkit-scrollbar-track {
+        background: rgba(15, 23, 42, 0.6);
+      }
+      ::-webkit-scrollbar-thumb {
+        background: rgba(51, 65, 85, 0.8);
+        border-radius: 9999px;
+      }
+      ::-webkit-scrollbar-thumb:hover {
+        background: rgba(16, 185, 129, 0.8);
+      }
+
+      /* CSS Media Print - Dedicated Thermal Receipt Formatting */
+      @media print {
+        @page {
+          margin: 0;
+          size: auto;
+        }
+
+        html, body {
+          background: #ffffff !important;
+          color: #000000 !important;
+          height: auto !important;
+          overflow: visible !important;
+          margin: 0 !important;
+          padding: 0 !important;
+        }
+
+        /* Sembunyikan seluruh UI Dashboard Admin */
+        .no-print, header, nav, aside, button, .pos-dashboard-ui {
+          display: none !important;
+        }
+
+        /* Tampilkan khusus kontainer Struk Thermal */
+        .print-only, #thermal-receipt-print {
+          display: block !important;
+          position: absolute !important;
+          left: 0 !important;
+          top: 0 !important;
+          width: 100% !important;
+          margin: 0 !important;
+          padding: 8px !important;
+          background: #ffffff !important;
+          color: #000000 !important;
+          font-family: 'JetBrains Mono', Courier, monospace !important;
+          font-size: 11px !important;
+          line-height: 1.25 !important;
+        }
+
+        .thermal-paper-58 {
+          max-width: 58mm !important;
+          width: 58mm !important;
+          margin: 0 auto !important;
+        }
+
+        .thermal-paper-80 {
+          max-width: 80mm !important;
+          width: 80mm !important;
+          margin: 0 auto !important;
+        }
+      }
+
+      @media screen {
+        .print-only {
+          display: none !important;
+        }
+      }
+    </style>
+  </head>
+  <body class="h-full w-full overflow-hidden bg-slate-50 text-slate-800 flex flex-col font-sans">
+    <!-- TOPBAR / NAVIGATION SYSTEM -->
+    <header class="no-print min-h-14 bg-white border-b border-slate-200 px-4 py-2 sm:px-6 flex flex-col md:flex-row items-center justify-between gap-3 shrink-0 shadow-sm z-30">
+      <!-- Left: Logo & Brand -->
+      <div class="flex items-center justify-between w-full md:w-auto gap-3">
+        <div class="flex items-center gap-2 bg-gradient-to-r from-emerald-600 to-teal-600 px-3 py-1.5 rounded-xl text-white font-extrabold text-sm tracking-tight shadow-sm shadow-emerald-900/50">
+          <svg class="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M16 11V7a4 4 4 0 00-8 0v4M5 9h14l1 12H4L5 9z" />
+          </svg>
+          <span>LaSayurku <span class="text-emerald-200 font-normal text-xs uppercase tracking-wider ml-0.5">POS</span></span>
+        </div>
+
+        <span class="hidden md:inline-block text-xs font-medium text-slate-400 bg-slate-800/80 px-2.5 py-1 rounded-md border border-slate-700/50">
+          v2.4 Pro Admin
+        </span>
+      </div>
+
+      <!-- Center: Nav Module Switcher (Horizontal scrollable on mobile) -->
+      <nav class="flex items-center gap-1 sm:gap-2 bg-slate-100 p-1 rounded-xl border border-slate-200 overflow-x-auto max-w-full no-scrollbar whitespace-nowrap">
+        <a
+          href="/adminrisman"
+          data-module="dashboard"
+          class={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-semibold transition-all duration-150 flex-shrink-0 ${
+            activeModule === 'dashboard'
+              ? 'bg-emerald-600 text-white shadow-sm shadow-emerald-600/30'
+              : 'text-slate-600 hover:text-slate-900 hover:bg-white'
+          }`}
+        >
+          <svg class="w-4 h-4 flex-shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2H6a2 2 0 01-2-2V6zM14 6a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2h-2a2 2 0 01-2-2V6zM4 16a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2H6a2 2 0 01-2-2v-2zM14 16a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2h-2a2 2 0 01-2-2v-2z" />
+          </svg>
+          <span>Dasbor</span>
+        </a>
+
+        <a
+          href="/adminrisman/kasir"
+          data-module="kasir"
+          class={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-semibold transition-all duration-150 flex-shrink-0 ${
+            activeModule === 'kasir'
+              ? 'bg-emerald-600 text-white shadow-sm shadow-emerald-600/30'
+              : 'text-slate-600 hover:text-slate-900 hover:bg-white'
+          }`}
+        >
+          <svg class="w-4 h-4 flex-shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 7h6m0 10v-3m-3 3h.01M9 17h.01M9 14h.01M12 14h.01M15 11h.01M12 11h.01M9 11h.01M7 21h10a2 2 0 002-2V5a2 2 0 00-2-2H7a2 2 0 00-2 2v14a2 2 0 002 2z" />
+          </svg>
+          <span>Kasir</span>
+        </a>
+
+        <a
+          href="/adminrisman/packing"
+          data-module="packing"
+          class={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-semibold transition-all duration-150 flex-shrink-0 ${
+            activeModule === 'packing'
+              ? 'bg-emerald-600 text-white shadow-sm shadow-emerald-600/30'
+              : 'text-slate-600 hover:text-slate-900 hover:bg-white'
+          }`}
+        >
+          <svg class="w-4 h-4 flex-shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M20 7l-8-4-8 4m16 0l-8 4m8-4v10l-8 4m0-10L4 7m8 4v10M4 7v10l8 4" />
+          </svg>
+          <span>Packing</span>
+        </a>
+
+        <a
+          href="/adminrisman/kurir"
+          data-module="kurir"
+          class={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-semibold transition-all duration-150 flex-shrink-0 ${
+            activeModule === 'kurir'
+              ? 'bg-emerald-600 text-white shadow-sm shadow-emerald-600/30'
+              : 'text-slate-600 hover:text-slate-900 hover:bg-white'
+          }`}
+        >
+          <svg class="w-4 h-4 flex-shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 16V6a1 1 0 00-1-1H4a1 1 0 00-1 1v10a1 1 0 001 1h1m8-1a1 1 0 01-1 1H9m4-1V8a1 1 0 011-1h2.586a1 1 0 01.707.293l3.414 3.414a1 1 0 01.293.707V16a1 1 0 01-1 1h-1m-6-1a1 1 0 001 1h1M5 17a2 2 0 100-4 2 2 0 000 4zm10 0a2 2 0 100-4 2 2 0 000 4z" />
+          </svg>
+          <span>Kurir</span>
+        </a>
+      </nav>
+      <div class="flex items-center gap-3">
+        <!-- Return to Public Store link -->
+        <a
+          href="/"
+          target="_blank"
+          class="hidden lg:flex items-center gap-1.5 text-xs text-slate-500 hover:text-emerald-600 transition-colors px-2.5 py-1 rounded-md border border-slate-200 hover:border-emerald-200 bg-white shadow-sm"
+          title="Buka Toko Online Utama"
+        >
+          <svg class="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14" />
+          </svg>
+          <span>Toko Web</span>
+        </a>
+
+        <!-- Cashier Avatar Badge -->
+        <div class="flex items-center gap-2.5 bg-white pl-2 pr-3 py-1 rounded-xl border border-slate-200 shadow-sm">
+          <div class="w-7 h-7 rounded-lg bg-emerald-100 text-emerald-700 flex items-center justify-center font-bold text-xs border border-emerald-200" id="admin-user-avatar">
+            AD
+          </div>
+          <div class="text-left leading-tight hidden sm:block">
+            <div id="admin-user-name" class="text-xs font-semibold text-slate-800">Admin LaSayurku</div>
+            <div id="admin-user-role" class="text-[10px] text-emerald-400 font-medium flex items-center gap-1">
+              <span class="w-1.5 h-1.5 rounded-full bg-emerald-400 animate-pulse"></span>
+              <!-- Role will be set dynamically via script -->
+            </div>
+          </div>
+        </div>
+        <button
+          id="admin-logout-btn"
+          class="flex items-center gap-1.5 rounded-xl border border-red-200 bg-red-50 px-3 py-1.5 text-xs font-bold text-red-600 shadow-sm transition hover:bg-red-100 hover:text-red-700"
+          title="Keluar dari akun admin"
+        >
+          <svg class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1" />
+          </svg>
+          <span>Logout</span>
+        </button>
+      </div>
+    </header>
+
+    <!-- PIN INTERCEPTOR MODAL -->
+    <div id="pos-pin-modal" class="fixed inset-0 z-50 hidden items-center justify-center bg-slate-900/50 backdrop-blur-sm p-4">
+      <div class="w-full max-w-sm rounded-3xl border border-slate-200 bg-white p-6 shadow-xl text-slate-800">
+        <div class="mb-4 text-center">
+          <div class="mx-auto mb-3 flex h-12 w-12 items-center justify-center rounded-2xl bg-emerald-100 text-emerald-600 border border-emerald-200">
+            <svg class="w-6 h-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z" />
+            </svg>
+          </div>
+          <h3 class="text-lg font-bold text-slate-900">Verifikasi PIN Navigasi</h3>
+          <p class="mt-1 text-xs text-slate-500">Masukkan PIN Keamanan Admin/Kasir untuk berpindah modul POS.</p>
+        </div>
+
+        <form id="pos-pin-form" class="space-y-4">
+          <div>
+            <label for="pos-pin-input" class="sr-only">PIN / Password</label>
+            <input
+              id="pos-pin-input"
+              type="password"
+              placeholder="Masukkan PIN / Password"
+              required
+              class="w-full rounded-2xl border border-slate-300 bg-slate-50 px-4 py-3 text-center text-lg font-bold text-slate-900 placeholder-slate-400 tracking-widest focus:border-emerald-500 focus:outline-none focus:ring-2 focus:ring-emerald-500/20"
+            />
+          </div>
+          <div id="pos-pin-error" class="hidden rounded-xl bg-red-50 border border-red-200 p-2.5 text-center text-xs font-semibold text-red-600">
+            PIN/Password salah. Akses ditolak.
+          </div>
+
+          <div class="flex gap-2">
+            <button
+              id="pos-pin-cancel"
+              type="button"
+              class="w-1/2 rounded-2xl border border-slate-300 bg-white py-2.5 text-xs font-semibold text-slate-700 hover:bg-slate-50 transition"
+            >
+              Batal
+            </button>
+            <button
+              type="submit"
+              class="w-1/2 rounded-2xl bg-emerald-600 py-2.5 text-xs font-semibold text-white hover:bg-emerald-500 transition shadow-lg shadow-emerald-900/40"
+            >
+              Verifikasi
+            </button>
+          </div>
+        </form>
+      </div>
+    </div>
+
+    <!-- MAIN APP CONTENT AREA -->
+    <div class="no-print flex-1 overflow-hidden relative">
+      <slot />
+    </div>
+
+    <!-- Data Provider for Script -->
+    <div id="admin-layout-data" data-allowed-roles={JSON.stringify(allowedRoles)} data-active-module={activeModule} data-pos-context={posContext} class="hidden"></div>
+
+    <script>
+      import {
+        getAdminSession,
+        clearAdminSession,
+        clearPosAuthCookies,
+        getAdminRedirect,
+        roleAllowed,
+      } from '../lib/adminAuth';
+
+      document.addEventListener('DOMContentLoaded', () => {
+        const dataEl = document.getElementById('admin-layout-data');
+        const allowedRoles = dataEl ? JSON.parse(dataEl.dataset.allowedRoles || '[]') : [];
+        const posContext = (dataEl?.dataset.posContext || 'staff') as 'online' | 'offline' | 'staff';
+
+        const preferred =
+          posContext === 'online' ? 'online' : posContext === 'offline' ? 'offline' : undefined;
+
+        function logoutSession() {
+          const session =
+            (preferred ? getAdminSession(preferred) : null) || getAdminSession();
+          const role = session?.role;
+          clearAdminSession(role);
+          clearPosAuthCookies(role);
+          sessionStorage.removeItem('pos_pin_verified');
+        }
+
+        const logoutButton = document.getElementById('admin-logout-btn');
+        const userNameEl = document.getElementById('admin-user-name');
+        const userRoleEl = document.getElementById('admin-user-role');
+        const userAvatarEl = document.getElementById('admin-user-avatar');
+
+        let activeSession =
+          posContext === 'online'
+            ? getAdminSession('online')
+            : posContext === 'offline'
+              ? getAdminSession('offline')
+              : getAdminSession();
+
+        if (!activeSession && posContext !== 'staff') {
+          const staff = getAdminSession();
+          const r = staff?.role?.toLowerCase() || '';
+          if (staff && (r.includes('admin') || r.includes('administrator'))) {
+            activeSession = staff;
+          }
+        }
+
+        if (!activeSession && posContext === 'staff') {
+          activeSession = getAdminSession();
+        }
+
+        if (logoutButton) {
+          logoutButton.addEventListener('click', (e) => {
+            e.preventDefault();
+            if (!confirm('Yakin ingin logout dari sistem?')) return;
+            logoutSession();
+            window.location.href = '/login?from=admin';
+          });
+        }
+
+        if (!activeSession) {
+          window.location.href = '/login?from=admin';
+          return;
+        }
+
+        if (userNameEl) {
+          userNameEl.textContent = activeSession.user_nicename;
+        }
+
+        const roleLabelMap: Record<string, string> = {
+          kasir_offline: '🏪 Kasir Offline',
+          kasir: '🏦 Kasir Online',
+          kasir_lasayurku: '🏦 Kasir Online',
+          packing_lasayurku: '📦 Packing',
+          kurir_lasayurku: '🚚 Kurir',
+          administrator: '⚙️ Administrator',
+          admin: '⚙️ Administrator',
+        };
+        const rawRole = activeSession.role || '';
+        const roleLabel =
+          roleLabelMap[rawRole] ||
+          roleLabelMap[rawRole.toLowerCase()] ||
+          rawRole.replace(/_/g, ' ');
+
+        if (userRoleEl) {
+          userRoleEl.textContent = roleLabel;
+        }
+        if (userAvatarEl) {
+          userAvatarEl.textContent = activeSession.user_nicename.slice(0, 2).toUpperCase() || 'AD';
+        }
+
+        const isAdmin = rawRole.toLowerCase().includes('admin');
+        const navMenu = document.querySelector('header nav');
+
+        if (!isAdmin && navMenu) {
+          navMenu.style.pointerEvents = 'none';
+          navMenu.style.opacity = '0.6';
+          navMenu.style.filter = 'grayscale(100%)';
+          navMenu.title = 'Navigasi dikunci: Hanya Administrator';
+        } else if (isAdmin && navMenu) {
+          const navLinks = navMenu.querySelectorAll('a');
+          navLinks.forEach((link) => {
+            if (link.getAttribute('href') === window.location.pathname) {
+              link.addEventListener('click', (e) => e.preventDefault());
+              link.style.cursor = 'default';
+            }
+          });
+        }
+
+        if (!roleAllowed(activeSession.role, allowedRoles)) {
+          const redirectUrl = getAdminRedirect(activeSession.role);
+          if (redirectUrl && redirectUrl !== window.location.pathname) {
+            window.location.href = `/login?from=admin&error=denied`;
+            return;
+          }
+          const root = document.querySelector('main') || document.body;
+          if (root) {
+            root.innerHTML = `
+              <main class="h-full w-full flex items-center justify-center bg-slate-50 px-4 py-12">
+                <div class="max-w-lg rounded-3xl border border-red-200 bg-white p-10 text-center shadow-xl shadow-red-500/5">
+                  <p class="mb-4 text-sm font-semibold uppercase tracking-[0.2em] text-red-600">Akses Ditolak</p>
+                  <h1 class="mb-4 text-3xl font-bold text-slate-900">Anda tidak memiliki izin untuk mengakses halaman ini.</h1>
+                  <p class="mb-6 text-sm text-slate-500">Hubungi administrator atau lanjutkan ke halaman yang sesuai.</p>
+                  <a href="${getAdminRedirect(activeSession.role)}" class="inline-flex rounded-full bg-emerald-600 px-6 py-3 text-sm font-semibold text-white hover:bg-emerald-700">Ke Halaman Saya</a>
+                </div>
+              </main>
+            `;
+          }
+        }
+      });
+    </script>
+  </body>
+</html>

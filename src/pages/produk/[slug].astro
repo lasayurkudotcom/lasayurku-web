@@ -1,0 +1,152 @@
+---
+import Layout from '../../layouts/Layout.astro';
+import ProductAddToCart from '../../components/ProductAddToCart.tsx';
+import { decodeHtml } from '../../lib/html';
+import {
+  getProductBySlug,
+  formatRupiah,
+  getDiscountPercentage,
+  getProductUnit,
+  WooCommerceApiError,
+} from '../../lib/woocommerce';
+import type { WooCommerceProduct } from '../../lib/woocommerce';
+
+// SSR: detail produk (harga, stok) harus selalu fresh saat dibuka.
+export const prerender = false;
+
+const { slug } = Astro.params;
+
+let product: WooCommerceProduct | null = null;
+let errorMessage: string | null = null;
+
+try {
+  product = await getProductBySlug(slug!);
+} catch (err) {
+  errorMessage =
+    err instanceof WooCommerceApiError ? err.message : 'Terjadi kesalahan tak terduga saat memuat produk.';
+  console.error('[produk/[slug].astro] Gagal memuat produk:', err);
+}
+
+// Produk benar-benar tidak ditemukan (bukan karena error API) -> 404
+if (!product && !errorMessage) {
+  return Astro.redirect('/404');
+}
+
+const discount = product ? getDiscountPercentage(product) : 0;
+const unit = product ? getProductUnit(product) : '';
+const isOutOfStock = product?.stock_status === 'outofstock';
+const images = product?.images ?? [];
+
+const pageTitle = product ? `${decodeHtml(product.name)} — LaSayurku` : 'Produk tidak ditemukan — LaSayurku';
+const pageDescription = product?.short_description
+  ? product.short_description.replace(/<[^>]*>/g, '').slice(0, 155)
+  : undefined;
+---
+
+<Layout title={pageTitle} description={pageDescription}>
+  <main class="px-4 pb-16 pt-6">
+    {
+      errorMessage && (
+        <div class="rounded-xl border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-700">
+          <p class="font-semibold">Gagal memuat produk</p>
+          <p class="mt-1 text-red-600">{errorMessage}</p>
+        </div>
+      )
+    }
+
+    {
+      product && (
+        <div class="grid gap-8 md:grid-cols-2">
+          {/* Galeri gambar */}
+          <div class="flex flex-col gap-3">
+            <div class="relative aspect-square overflow-hidden rounded-2xl bg-brand/10">
+              {images[0] ? (
+                <img src={images[0].src} alt={images[0].alt || product.name} class="h-full w-full object-cover" />
+              ) : (
+                <div class="flex h-full w-full items-center justify-center text-sm text-brand/40">
+                  Tidak ada gambar
+                </div>
+              )}
+              {discount > 0 && (
+                <span
+                  class={`absolute left-3 top-3 rounded-full px-2.5 py-1 text-xs font-bold text-white shadow-sm ${
+                    discount >= 20 ? 'bg-red-500' : 'bg-orange-500'
+                  }`}
+                >
+                  {discount >= 20 ? `⚡ Flash Sale -${discount}%` : `Promo -${discount}%`}
+                </span>
+              )}
+            </div>
+
+            {images.length > 1 && (
+              <div class="flex gap-2 overflow-x-auto">
+                {images.slice(1, 5).map((img) => (
+                  <img src={img.src} alt={img.alt || product.name} class="h-16 w-16 flex-shrink-0 rounded-lg object-cover" />
+                ))}
+              </div>
+            )}
+          </div>
+
+          {/* Info produk */}
+          <div class="flex flex-col gap-3">
+            {product.categories[0] && (
+              <a
+                href={`/c/${product.categories[0].slug}`}
+                class="text-xs font-semibold uppercase tracking-wide text-brand"
+              >
+                {decodeHtml(product.categories[0].name)}
+              </a>
+            )}
+
+            <h1 class="text-xl font-bold text-neutral-800 sm:text-2xl">{product.name}</h1>
+
+            {unit && <p class="text-sm text-neutral-400">{unit}</p>}
+
+            <div class="flex items-baseline gap-3">
+              {product.on_sale && (
+                <span class="text-sm text-neutral-400 line-through">{formatRupiah(product.regular_price)}</span>
+              )}
+              <span class="text-2xl font-bold text-brand">{formatRupiah(product.price)}</span>
+            </div>
+
+            <p class={`text-xs font-semibold ${isOutOfStock ? 'text-red-500' : 'text-brand'}`}>
+              {isOutOfStock
+                ? 'Stok habis'
+                : product.stock_quantity != null
+                  ? `Stok tersedia: ${product.stock_quantity}`
+                  : 'Stok tersedia'}
+            </p>
+
+            <div class="mt-2">
+              <ProductAddToCart
+                client:load
+                id={product.id}
+                slug={product.slug}
+                name={product.name}
+                image={images[0]?.src ?? ''}
+                price={Number(product.price)}
+                regularPrice={Number(product.regular_price)}
+                unit={unit}
+                stockQuantity={product.stock_quantity}
+                isOutOfStock={isOutOfStock}
+              />
+            </div>
+
+            {product.short_description && (
+              <div class="prose prose-sm mt-4 max-w-none text-neutral-600" set:html={product.short_description} />
+            )}
+          </div>
+        </div>
+      )
+    }
+
+    {
+      product?.description && (
+        <section class="mt-10 border-t border-brand/10 pt-6">
+          <h2 class="mb-3 text-base font-bold text-neutral-800">Deskripsi Produk</h2>
+          <div class="prose prose-sm max-w-none text-neutral-600" set:html={product.description} />
+        </section>
+      )
+    }
+  </main>
+</Layout>

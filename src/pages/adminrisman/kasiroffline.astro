@@ -1,0 +1,29 @@
+---
+export const prerender = false;
+import POSApp from '../../components/pos/POSApp';
+---
+
+<!DOCTYPE html>
+<html lang="id">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Kasir Offline - La Sayurku</title>
+</head>
+<body>
+  <div id="kasir-offline-root" class="min-h-screen bg-slate-50 text-slate-900 overflow-hidden">
+    <POSApp client:only="react" />
+  </div>
+  <script>
+    import { getAdminSession, roleAllowed } from '../../lib/adminAuth';
+
+    document.addEventListener('DOMContentLoaded', () => {
+      const session = getAdminSession('offline');
+      const allowed = ['kasir_offline', 'kasiroffline', 'administrator', 'admin'];
+      if (!session || !roleAllowed(session.role, allowed)) {
+        window.location.replace('/login?from=admin&error=denied');
+      }
+    });
+  </script>
+</body>
+</html>

@@ -1,0 +1,67 @@
+---
+import Layout from '../layouts/Layout.astro';
+import ProductGrid from '../components/ProductGrid.astro';
+import { getProducts, WooCommerceApiError } from '../lib/woocommerce';
+import type { WooCommerceProduct } from '../lib/woocommerce';
+
+export const prerender = false;
+
+const query = Astro.url.searchParams.get('q')?.trim() ?? '';
+let products: WooCommerceProduct[] = [];
+let errorMessage: string | null = null;
+
+if (query) {
+  try {
+    const result = await getProducts({ search: query, per_page: 24 });
+    products = result.products;
+  } catch (err) {
+    errorMessage =
+      err instanceof WooCommerceApiError ? err.message : 'Terjadi kesalahan tak terduga saat mencari produk.';
+    console.error('[cari.astro] Gagal mencari produk:', err);
+  }
+}
+---
+
+<Layout title={query ? `Hasil pencarian "${query}" — LaSayurku` : 'Cari Produk — LaSayurku'}>
+  <main class="px-4 pb-16 pt-6">
+    <form action="/cari" method="get" class="mb-6 flex gap-2">
+      <input
+        type="search"
+        name="q"
+        value={query}
+        placeholder="Cari sayur, buah, bumbu dapur..."
+        class="w-full rounded-xl border border-brand/20 px-4 py-2.5 text-sm focus:border-brand focus:outline-none"
+      />
+      <button
+        type="submit"
+        class="flex-shrink-0 rounded-xl bg-brand px-5 py-2.5 text-sm font-semibold text-white hover:bg-brand-dark"
+      >
+        Cari
+      </button>
+    </form>
+
+    {
+      errorMessage && (
+        <div class="mb-6 rounded-xl border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-700">
+          <p class="font-semibold">Gagal memuat hasil pencarian</p>
+          <p class="mt-1 text-red-600">{errorMessage}</p>
+        </div>
+      )
+    }
+
+    {
+      query && !errorMessage && (
+        <p class="mb-4 text-sm text-neutral-500">
+          {products.length} hasil untuk "<span class="font-semibold text-neutral-700">{query}</span>"
+        </p>
+      )
+    }
+
+    <ProductGrid
+      products={products}
+      isLoading={false}
+      emptyTitle={query ? 'Produk tidak ditemukan' : 'Mulai pencarian'}
+      emptyDescription={query ? 'Coba kata kunci lain.' : 'Ketik nama produk yang ingin Anda cari di kolom di atas.'}
+    />
+  </main>
+</Layout>

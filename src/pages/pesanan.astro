@@ -1,0 +1,241 @@
+---
+import Layout from "../layouts/Layout.astro";
+---
+
+<Layout title="Pesanan Saya — LaSayurku">
+  <main class="px-4 pb-16 pt-8">
+    <h1 class="mb-6 text-xl font-bold text-neutral-800">Pesanan Saya</h1>
+
+    <!-- Loading state -->
+    <div
+      id="orders-loading"
+      class="flex flex-col items-center py-16 text-center"
+    >
+      <div
+        class="h-8 w-8 animate-spin rounded-full border-4 border-brand/20 border-t-brand"
+      >
+      </div>
+      <p class="mt-4 text-sm text-neutral-500">Memuat riwayat pesanan...</p>
+    </div>
+
+    <!-- Empty state (hidden by default, shown by JS if no orders) -->
+    <div
+      id="orders-empty"
+      class="hidden flex-col items-center px-4 pb-16 pt-8 text-center"
+    >
+      <div
+        class="flex h-14 w-14 items-center justify-center rounded-full bg-brand/10 text-brand/40"
+      >
+        <svg
+          xmlns="http://www.w3.org/2000/svg"
+          class="h-7 w-7"
+          viewBox="0 0 24 24"
+          fill="none"
+          stroke="currentColor"
+          stroke-width="1.5"
+        >
+          <path
+            stroke-linecap="round"
+            stroke-linejoin="round"
+            d="M9 12h6M9 15.75h6M9 8.25h6M6.75 4.5h10.5A2.25 2.25 0 0119.5 6.75v12a2.25 2.25 0 01-2.25 2.25H6.75A2.25 2.25 0 014.5 18.75v-12A2.25 2.25 0 016.75 4.5z"
+          ></path>
+        </svg>
+      </div>
+      <p class="mt-4 text-lg font-bold text-neutral-800">
+        Belum ada riwayat pesanan
+      </p>
+      <p class="mt-2 max-w-xs text-sm text-neutral-500">
+        Riwayat pesanan Anda akan muncul di sini setelah Anda login dan
+        menyelesaikan checkout.
+      </p>
+      <a
+        href="/"
+        class="mt-6 inline-block rounded-full bg-brand px-6 py-2.5 text-sm font-semibold text-white hover:bg-brand-dark"
+      >
+        Mulai Belanja
+      </a>
+    </div>
+
+    <!-- Not logged in state -->
+    <div
+      id="orders-not-logged-in"
+      class="hidden flex-col items-center px-4 pb-16 pt-8 text-center"
+    >
+      <p class="text-lg font-bold text-neutral-800">Anda belum masuk</p>
+      <p class="mt-2 max-w-xs text-sm text-neutral-500">
+        Silakan login terlebih dahulu untuk melihat riwayat pesanan Anda.
+      </p>
+      <a
+        href="/login"
+        class="mt-6 inline-block rounded-full bg-brand px-6 py-2.5 text-sm font-semibold text-white hover:bg-brand-dark"
+      >
+        Masuk / Daftar
+      </a>
+    </div>
+
+    <!-- Orders list (populated by JS) -->
+    <div id="orders-list" class="hidden flex flex-col gap-4"></div>
+  </main>
+
+  <script is:inline>
+    function runCheckAuth() {
+      checkAuth();
+    }
+
+    if (document.readyState === "loading") {
+      document.addEventListener("DOMContentLoaded", runCheckAuth);
+    } else {
+      runCheckAuth();
+    }
+
+    // Dukungan untuk navigasi Astro ViewTransitions
+    document.addEventListener("astro:page-load", runCheckAuth);
+
+    async function checkAuth() {
+      const loadingEl = document.getElementById("orders-loading");
+      const emptyEl = document.getElementById("orders-empty");
+      const notLoggedInEl = document.getElementById("orders-not-logged-in");
+      const listEl = document.getElementById("orders-list");
+
+      // 1. Ambil token, email, atau userId dari beberapa nama key yang mungkin tersimpan
+      const token =
+        localStorage.getItem("user_token") ||
+        localStorage.getItem("auth_token");
+      const userId =
+        localStorage.getItem("user_id") || localStorage.getItem("user_email");
+
+      // 2. Jika token tidak ada sama sekali, tampilkan tampilan "Belum Masuk"
+      if (!token) {
+        if (loadingEl) loadingEl.style.display = "none";
+        if (notLoggedInEl) {
+          notLoggedInEl.classList.remove("hidden");
+          notLoggedInEl.style.display = "flex";
+        }
+        return;
+      }
+
+      try {
+        // 3. Panggil API pesanan menggunakan customerId atau email
+        const paramQuery = userId
+          ? `?customerId=${encodeURIComponent(userId)}`
+          : "";
+        const res = await fetch(`/api/account/orders${paramQuery}`, {
+          headers: {
+            Authorization: `Bearer ${token}`,
+          },
+        });
+
+        if (loadingEl) loadingEl.style.display = "none";
+        if (notLoggedInEl) notLoggedInEl.style.display = "none";
+
+        // 4. Jika pesanan kosong atau error
+        if (!res.ok) {
+          if (emptyEl) {
+            emptyEl.classList.remove("hidden");
+            emptyEl.style.display = "flex";
+          }
+          return;
+        }
+
+        const orders = await res.json();
+
+        if (!Array.isArray(orders) || orders.length === 0) {
+          if (emptyEl) {
+            emptyEl.classList.remove("hidden");
+            emptyEl.style.display = "flex";
+          }
+          return;
+        }
+
+        // 5. Render kartu riwayat pesanan
+        if (listEl) {
+          if (emptyEl) emptyEl.style.display = "none";
+          listEl.classList.remove("hidden");
+          listEl.style.display = "flex";
+
+          listEl.innerHTML = orders
+            .map((order) => {
+              const statusMap = {
+                pending: {
+                  label: "Menunggu Pembayaran",
+                  color: "bg-yellow-100 text-yellow-700",
+                },
+                processing: {
+                  label: "Diproses",
+                  color: "bg-blue-100 text-blue-700",
+                },
+                "on-hold": {
+                  label: "Ditahan",
+                  color: "bg-orange-100 text-orange-700",
+                },
+                completed: {
+                  label: "Selesai",
+                  color: "bg-brand/10 text-brand",
+                },
+                cancelled: {
+                  label: "Dibatalkan",
+                  color: "bg-red-100 text-red-700",
+                },
+                refunded: {
+                  label: "Dikembalikan",
+                  color: "bg-gray-100 text-gray-600",
+                },
+                failed: { label: "Gagal", color: "bg-red-100 text-red-700" },
+              };
+              const status = statusMap[order.status] || {
+                label: order.status,
+                color: "bg-gray-100 text-gray-600",
+              };
+
+              const date = new Date(order.date_created).toLocaleDateString(
+                "id-ID",
+                {
+                  day: "numeric",
+                  month: "long",
+                  year: "numeric",
+                },
+              );
+
+              const total = new Intl.NumberFormat("id-ID", {
+                style: "currency",
+                currency: "IDR",
+                minimumFractionDigits: 0,
+              }).format(Number(order.total));
+
+              const productSummary = (order.line_items || [])
+                .slice(0, 3)
+                .map((item) => `${item.name} x${item.quantity}`)
+                .join(", ");
+              const moreItems =
+                (order.line_items || []).length > 3
+                  ? ` +${order.line_items.length - 3} produk lainnya`
+                  : "";
+
+              return `
+            <a href="/checkout/sukses?order=${order.id}" class="block rounded-xl border border-brand/10 bg-white p-4 hover:shadow-md transition-shadow">
+              <div class="flex items-center justify-between mb-2">
+                <span class="text-sm font-bold text-brand">#${order.id}</span>
+                <span class="text-xs px-2.5 py-1 rounded-full font-medium ${status.color}">${status.label}</span>
+              </div>
+              <p class="text-xs text-neutral-400 mb-2">${date}</p>
+              <p class="text-sm text-neutral-600 mb-3 line-clamp-2">${productSummary}${moreItems}</p>
+              <div class="flex items-center justify-between border-t border-brand/10 pt-2">
+                <span class="text-xs text-neutral-400">Total</span>
+                <span class="text-sm font-bold text-neutral-800">${total}</span>
+              </div>
+            </a>
+          `;
+            })
+            .join("");
+        }
+      } catch (err) {
+        console.error("Gagal memuat pesanan:", err);
+        if (loadingEl) loadingEl.style.display = "none";
+        if (emptyEl) {
+          emptyEl.classList.remove("hidden");
+          emptyEl.style.display = "flex";
+        }
+      }
+    }
+  </script></Layout
+>

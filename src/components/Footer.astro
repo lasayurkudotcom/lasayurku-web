@@ -1,0 +1,132 @@
+---
+const paymentLogos = [
+  {
+    name: 'ShopeePay',
+    src: '/payments/shopeepay.webp',
+  },
+  {
+    name: 'DANA',
+    src: '/payments/dana.webp',
+  },
+  {
+    name: 'Alfamart',
+    src: '/payments/alfamart.webp',
+  },
+  {
+    name: 'QRIS',
+    src: '/payments/qris.webp',
+  },
+  {
+    name: 'GoPay',
+    src: '/payments/gopay.webp',
+  },
+];
+
+const marqueeLogos = [...paymentLogos, ...paymentLogos, ...paymentLogos];
+---
+
+<footer class="mt-16 bg-[#0e2d19] text-gray-200">
+  <div class="bg-[#114326] py-6">
+    <div class="mx-auto flex min-h-[120px] max-w-7xl flex-col gap-4 px-6 md:flex-row md:items-center md:justify-between">
+      <div>
+        <p class="text-lg font-bold text-white">Metode Pembayaran</p>
+      </div>
+
+      <div class="relative overflow-hidden w-full rounded-3xl bg-transparent p-3 shadow-sm md:flex-1">
+        <div class="flex w-max min-w-max items-center gap-6 animate-marquee py-1">
+          {marqueeLogos.map((logo) => (
+            <div class="flex h-14 w-36 flex-shrink-0 items-center justify-center rounded-3xl bg-transparent p-2 shadow-sm">
+              <img src={logo.src} alt={logo.name} class="h-full w-full object-contain" />
+            </div>
+          ))}
+        </div>
+        <div class="mt-3 flex items-center justify-center gap-2">
+          {paymentLogos.map(() => (
+            <span class="h-2 w-2 rounded-full bg-gray-300/60" />
+          ))}
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <style>
+    @keyframes marqueeSmooth {
+      0% {
+        transform: translateX(0%);
+      }
+      100% {
+        transform: translateX(-33.33%);
+      }
+    }
+
+    .animate-marquee {
+      display: flex;
+      width: max-content;
+      animation: marqueeSmooth 25s linear infinite;
+      will-change: transform;
+      animation-play-state: running;
+    }
+
+    .animate-marquee:hover {
+      animation-play-state: paused;
+    }
+  </style>
+
+  <div class="bg-[#0D160B] py-12 px-6 text-gray-200">
+    <div class="mx-auto grid max-w-7xl grid-cols-1 gap-8 md:grid-cols-4">
+      <div class="space-y-4">
+        <p class="text-2xl font-extrabold text-white">La Sayurku</p>
+        <p class="max-w-sm text-sm leading-7 text-gray-300">
+          L A Sayurku menyediakan bahan makanan segar berkualitas terbaik. Dipilih langsung dari petani terpercaya dan siap diantar cepat ke depan pintu rumah Anda.
+        </p>
+      </div>
+
+      <div class="space-y-4">
+        <p class="text-base font-bold text-white">Menu</p>
+        <div class="space-y-2 text-sm text-gray-200">
+          <a href="/" class="block text-brand font-semibold hover:underline">Home</a>
+          <a href="/about" class="block hover:text-gray-100">Tentang Kami</a>
+          <a href="/kontak" class="block hover:text-gray-100">Kontak</a>
+          <a href="/produk" class="block hover:text-gray-100">Semua Produk</a>
+          <a href="/akun" class="block hover:text-gray-100">My account</a>
+        </div>
+      </div>
+
+      <div class="space-y-4">
+        <p class="text-base font-bold text-white">Get In Touch</p>
+        <div class="space-y-2 text-sm text-gray-200">
+          <p>Email: <a href="mailto:cs@LAsayurku.com" class="text-gray-100 hover:text-white">cs@LAsayurku.com</a></p>
+          <p>Phone: <a href="tel:088802192324" class="text-gray-100 hover:text-white">088802192324</a></p>
+        </div>
+      </div>
+
+      <div class="space-y-4">
+        <p class="text-base font-bold text-white">Lokasi</p>
+        <div class="overflow-hidden rounded-xl border border-white/10 bg-black/20">
+          <iframe
+            class="h-48 w-full rounded-xl"
+            src="https://www.google.com/maps?q=Jalan+Letnan+Adun,+Rancaekek,+Bandung+Regency,+West+Java&z=15&output=embed"
+            loading="lazy"
+            referrerpolicy="no-referrer-when-downgrade"
+          />
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div class="relative bg-[#0b2415] py-6 text-center text-sm text-gray-300">
+    <div class="mx-auto max-w-7xl px-6">
+      <p>
+        © 2026 L A Sayurku. All Rights Reserved. | <a href="/kebijakan-privasi" class="text-gray-200 hover:underline">Kebijakan Privasi</a> | <a href="/garansi-pengembalian" class="text-gray-200 hover:underline">Garansi & Pengembalian</a>
+      </p>
+
+    <button
+      type="button"
+      onclick="window.scrollTo({top: 0, behavior: 'smooth'})"
+      class="absolute left-6 top-1/2 -translate-y-1/2 rounded-2xl bg-brand px-4 py-2 text-sm font-semibold text-white shadow-lg transition hover:bg-brand-dark"
+      aria-label="Back to Top"
+    >
+      ↑ Back to Top
+    </button>
+  </div>
+</footer>

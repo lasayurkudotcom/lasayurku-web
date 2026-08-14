@@ -1,0 +1,60 @@
+---
+import Header from '../components/Header.astro';
+import Footer from '../components/Footer.astro';
+import BottomNav from '../components/BottomNav.astro';
+
+import '../styles/global.css';
+
+interface Props {
+  title?: string;
+  description?: string;
+}
+
+const {
+  title = 'LaSayurku — Belanja Sayur & Bahan Segar Online',
+  description = 'Belanja sayur dan bahan makanan segar, dipetik pagi ini dan diantar langsung ke rumah Anda.',
+} = Astro.props;
+---
+
+<html lang="id">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <link rel="icon" type="image/png" href="/favicon-32.png" sizes="32x32" />
+    <link rel="icon" type="image/png" href="/favicon.png" sizes="512x512" />
+    <link rel="apple-touch-icon" href="/favicon.png" />
+    <title>LaSayurku - Toko Sayur, Buah & Bahan Segar Online Terpercaya</title>
+    <meta name="description" content="Belanja sayur, buah, dan bahan makanan segar online di LaSayurku. Dipetik langsung dari petani terpercaya dan siap diantar cepat ke rumah Anda. Garansi segar setiap hari!" />
+    <meta name="keywords" content="lasayurku, belanja sayur online, toko sayur segar, jual buah online, sembako online, bahan masakan segar, pengiriman sayur cepat" />
+    <meta name="robots" content="index, follow" />
+
+    <!-- Open Graph / WhatsApp / Facebook Preview -->
+    <meta property="og:type" content="website" />
+    <meta property="og:title" content="LaSayurku - Toko Sayur & Bahan Segar Online" />
+    <meta property="og:description" content="Belanja sayur dan buah segar dipetik langsung dari petani. Siap diantar ke rumah Anda!" />
+    <meta property="og:image" content="/images/logo.png" />
+  </head>
+  <body class="flex min-h-screen flex-col bg-slate-50 text-slate-800">
+    <Header />
+
+    <!--
+      App-shell container: satu batas max-width dipakai konsisten di semua halaman
+      (di-set di sini, bukan di tiap <main> halaman) supaya tampilan HP & desktop selaras
+      — mirip lebar konten app grocery (Segari-style), tidak melebar penuh di layar besar.
+      pb-20 di mobile memberi ruang supaya konten tidak ketutup BottomNav yang fixed.
+    -->
+    <div class="flex-1 pb-20 sm:pb-0">
+      <div class="mx-auto w-full max-w-6xl">
+        <slot />
+      </div>
+    </div>
+
+    <!-- Footer hanya relevan di desktop; di mobile digantikan BottomNav -->
+    <div class="hidden sm:block">
+      <Footer />
+    </div>
+
+    <BottomNav />
+
+  </body>
+</html>

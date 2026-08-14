@@ -1,0 +1,45 @@
+---
+import Layout from '../layouts/Layout.astro';
+import ProductGrid from '../components/ProductGrid.astro';
+import { getProducts, WooCommerceApiError } from '../lib/woocommerce';
+import type { WooCommerceProduct } from '../lib/woocommerce';
+
+export const prerender = false;
+
+let products: WooCommerceProduct[] = [];
+let errorMessage: string | null = null;
+
+try {
+  const result = await getProducts({ on_sale: true, per_page: 24, orderby: 'date', order: 'desc' });
+  products = result.products;
+} catch (err) {
+  errorMessage =
+    err instanceof WooCommerceApiError ? err.message : 'Terjadi kesalahan tak terduga saat memuat promo.';
+  console.error('[promo.astro] Gagal memuat produk promo:', err);
+}
+---
+
+<Layout title="Promo Hari Ini — LaSayurku" description="Kumpulan produk sayur & bahan segar sedang diskon di LaSayurku.">
+  <main class="px-4 pb-16 pt-6">
+    <div class="mb-6 overflow-hidden rounded-2xl bg-gradient-to-r from-orange-400 to-red-500 px-6 py-8 text-white">
+      <p class="text-xs font-semibold uppercase tracking-wide text-orange-50">Jangan sampai kehabisan</p>
+      <h1 class="mt-1 text-xl font-bold sm:text-2xl">Promo & Flash Sale Hari Ini</h1>
+    </div>
+
+    {
+      errorMessage && (
+        <div class="mb-6 rounded-xl border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-700">
+          <p class="font-semibold">Gagal memuat promo</p>
+          <p class="mt-1 text-red-600">{errorMessage}</p>
+        </div>
+      )
+    }
+
+    <ProductGrid
+      products={products}
+      isLoading={false}
+      emptyTitle="Belum ada promo saat ini"
+      emptyDescription="Cek lagi nanti, promo baru akan segera hadir."
+    />
+  </main>
+</Layout>

@@ -1,0 +1,23 @@
+---
+return Astro.redirect("/");
+---
+<!DOCTYPE html>
+<html lang="id">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>404 - Halaman Tidak Ditemukan</title>
+  <!-- Fallback meta refresh -->
+  <meta http-equiv="refresh" content="0;url=/" />
+</head>
+<body>
+  <div style="text-align: center; padding: 4rem 1rem; font-family: sans-serif;">
+    <h1 style="color: #059669; font-size: 3rem; margin: 0;">404</h1>
+    <p>Halaman tidak ditemukan. Mengarahkan ke halaman utama...</p>
+  </div>
+  <!-- Client-side script fallback -->
+  <script>
+    window.location.href = "/";
+  </script>
+</body>
+</html>

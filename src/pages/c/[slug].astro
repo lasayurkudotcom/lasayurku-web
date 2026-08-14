@@ -1,0 +1,278 @@
+---
+import Layout from '../../layouts/Layout.astro';
+import ProductGrid from '../../components/ProductGrid.astro';
+import CategoryTopBar from '../../components/CategoryTopBar.tsx';
+import { decodeHtml } from '../../lib/html';
+import {
+  getCategories,
+  getCategoryBySlug,
+  getProducts,
+  WooCommerceApiError,
+} from '../../lib/woocommerce';
+import type { WooCommerceCategory, WooCommerceProduct } from '../../lib/woocommerce';
+
+export const prerender = false;
+
+const { slug } = Astro.params;
+// ?sub=semua (default) | ?sub=terlaris | ?sub=<slug-anak>
+const subParam = Astro.url.searchParams.get('sub') ?? 'semua';
+const pageParam = Astro.url.searchParams.get('page');
+const currentPage = pageParam ? Math.max(1, Number(pageParam)) : 1;
+
+let parentCategory: WooCommerceCategory | null = null;
+let childCategories: WooCommerceCategory[] = [];
+let topLevelCategories: WooCommerceCategory[] = [];
+let products: WooCommerceProduct[] = [];
+let totalPages = 0;
+let errorMessage: string | null = null;
+
+try {
+  const [category, allCategories] = await Promise.all([getCategoryBySlug(slug!), getCategories()]);
+  parentCategory = category;
+  topLevelCategories = allCategories.filter((c) => c.parent === 0);
+
+  if (parentCategory) {
+    // daftar anak (subkategori) untuk sidebar
+    childCategories = allCategories.filter((c) => c.parent === parentCategory!.id);
+
+    const activeChild =
+      subParam !== 'semua' && subParam !== 'terlaris'
+        ? childCategories.find((c) => c.slug === subParam)
+        : undefined;
+
+    const targetCategoryId = activeChild?.id ?? parentCategory.id;
+    const orderby = subParam === 'terlaris' ? 'popularity' : 'date';
+
+    const result = await getProducts({
+      category: targetCategoryId,
+      page: currentPage,
+      per_page: 12,
+      orderby,
+      order: 'desc',
+    });
+    products = result.products;
+    totalPages = result.totalPages;
+  }
+} catch (err) {
+  errorMessage =
+    err instanceof WooCommerceApiError ? err.message : 'Terjadi kesalahan tak terduga saat memuat kategori.';
+  console.error('[kategori/[slug].astro] Gagal memuat kategori:', err);
+}
+
+// Kategori benar-benar tidak ditemukan (bukan karena error API) -> 404
+if (!parentCategory && !errorMessage) {
+  return Astro.redirect('/404');
+}
+
+const decodedParentName = parentCategory ? decodeHtml(parentCategory.name) : '';
+
+function pageLink(page: number): string {
+  if (!parentCategory) return '#';
+  const params = new URLSearchParams();
+  params.set('page', String(page));
+  return `/c/${parentCategory.slug}?${params.toString()}`;
+}
+---
+
+<Layout title={parentCategory ? `${decodedParentName} — LaSayurku` : 'Kategori tidak ditemukan — LaSayurku'}>
+  <main class="px-4 pb-24 pt-6">
+    {
+      errorMessage && (
+        <div class="rounded-xl border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-700">
+          <p class="font-semibold">Gagal memuat kategori</p>
+          <p class="mt-1 text-red-600">{errorMessage}</p>
+        </div>
+      )
+    }
+
+    {
+      topLevelCategories.length > 0 && (
+        <div class="mb-6">
+          <CategoryTopBar
+            client:load
+            categories={topLevelCategories.map((c) => ({
+              id: c.id,
+              name: decodeHtml(c.name),
+              slug: c.slug,
+              image: c.image?.src ?? null,
+            }))}
+            activeSlug={parentCategory?.slug}
+          />
+        </div>
+      )
+    }
+
+    {
+      parentCategory && (
+        <div class="flex flex-row items-start gap-6 mt-6 w-full">
+          {/* Sidebar sub-kategori */}
+          <aside class="w-[105px] sm:w-[150px] md:w-56 flex-shrink-0 sticky top-16 h-[calc(100vh-80px)] overflow-y-auto no-scrollbar [scrollbar-width:none] [-ms-overflow-style:none] [&::-webkit-scrollbar]:hidden">
+            <div class="rounded-xl sm:rounded-2xl border border-gray-100 bg-white p-1.5 sm:p-4 shadow-sm">
+              <div class="mb-3 sm:mb-4">
+                <p class="text-[9px] sm:text-[10px] font-semibold uppercase tracking-[0.22em] text-gray-500">Sub Kategori</p>
+                <h2 class="mt-1 text-xs sm:text-base font-bold text-neutral-900 truncate">{decodedParentName}</h2>
+              </div>
+
+              <nav class="grid gap-1.5 sm:gap-2" aria-label="Sub kategori">
+                <a
+                  href={pageLink(1) + ('&sub=semua')}
+                  class={`flex justify-between items-center w-full rounded-lg px-1.5 py-1.5 sm:px-3 sm:py-2.5 mb-0.5 text-[10px] sm:text-sm font-medium transition-all ${
+                    subParam === 'semua'
+                      ? 'bg-[#16803d] text-white shadow-sm'
+                      : 'text-gray-600 hover:bg-emerald-50 hover:text-[#16803d]'
+                  }`}
+                >
+                  <span class="text-[10px] sm:text-xs font-semibold truncate">Semua</span>
+                  <span class={`text-[10px] px-1.5 py-0.5 rounded-full font-bold ml-1 flex-shrink-0 ${
+                    subParam === 'semua' ? 'bg-white/20 text-white' : 'bg-emerald-100 text-[#16803d]'
+                  }`}>{parentCategory.count}</span>
+                </a>
+
+                <a
+                  href={pageLink(1) + ('&sub=terlaris')}
+                  class={`flex justify-between items-center w-full rounded-lg px-1.5 py-1.5 sm:px-3 sm:py-2.5 mb-0.5 text-[10px] sm:text-sm font-medium transition-all ${
+                    subParam === 'terlaris'
+                      ? 'bg-[#16803d] text-white shadow-sm'
+                      : 'text-gray-600 hover:bg-emerald-50 hover:text-[#16803d]'
+                  }`}
+                >
+                  <span class="text-[10px] sm:text-xs font-semibold truncate">Terlaris</span>
+                  <span class={`text-[10px] px-1.5 py-0.5 rounded-full font-bold ml-1 flex-shrink-0 ${
+                    subParam === 'terlaris' ? 'bg-white/20 text-white' : 'bg-emerald-100 text-[#16803d]'
+                  }`}>{parentCategory.count}</span>
+                </a>
+
+                {childCategories.map((child) => (
+                  <a
+                    key={child.id}
+                    href={pageLink(1) + (`&sub=${child.slug}`)}
+                    class={`flex justify-between items-center w-full rounded-lg px-1.5 py-1.5 sm:px-3 sm:py-2.5 mb-0.5 text-[10px] sm:text-sm font-medium transition-all ${
+                      subParam === child.slug
+                        ? 'bg-[#16803d] text-white shadow-sm'
+                        : 'text-gray-600 hover:bg-emerald-50 hover:text-[#16803d]'
+                    }`}
+                  >
+                    <span class="text-[10px] sm:text-xs font-semibold truncate">{decodeHtml(child.name)}</span>
+                    <span class={`text-[10px] px-1.5 py-0.5 rounded-full font-bold ml-1 flex-shrink-0 ${
+                      subParam === child.slug ? 'bg-white/20 text-white' : 'bg-emerald-100 text-[#16803d]'
+                    }`}>{child.count}</span>
+                  </a>
+                ))}
+              </nav>
+            </div>
+          </aside>
+
+          {/* Konten kanan */}
+          <div class="flex-1 min-w-0 overflow-hidden pl-2">
+
+            {/* Banner promo */}
+            <div class="relative mb-4 overflow-hidden rounded-2xl bg-[#16803d] text-white shadow-xl p-4">
+              <div class="absolute inset-0 bg-[radial-gradient(circle_at_top_right,_rgba(255,255,255,0.15),_transparent_50%)]" />
+              <div class="relative flex flex-col gap-3 items-start justify-between md:flex-row md:items-center">
+                <div class="max-w-xl">
+                  <p class="text-lg font-extrabold text-white mb-1 md:text-2xl">Porsi Baru!</p>
+                  <p class="text-xs md:text-sm text-emerald-100 max-w-md leading-relaxed">
+                    Pas untuk kebutuhanmu — pilihan {decodedParentName.toLowerCase()} segar, porsi lebih kecil dan praktis untuk belanja cepat.
+                  </p>
+                </div>
+
+                <div class="flex items-center justify-center">
+                  <img
+                    src="/hero-banner.webp"
+                    alt="Ilustrasi porsi baru"
+                    class="hidden sm:block w-16 h-16 max-h-20 object-contain drop-shadow-md transition-transform duration-300 hover:scale-105 md:w-32 md:h-32 md:max-h-28 bg-transparent"
+                  />
+                </div>
+              </div>
+            </div>
+
+            <h1 class="mb-3 text-lg font-bold text-neutral-800 sm:text-xl">{decodedParentName}</h1>
+
+            <div class="mb-6">
+              <label for="category-search" class="sr-only">Cari produk dalam kategori</label>
+              <div class="flex h-11 items-center gap-2 rounded-full bg-gray-100 px-4 text-sm text-neutral-700">
+                <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 flex-shrink-0 text-brand" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                  <path stroke-linecap="round" stroke-linejoin="round" d="M21 21l-4.35-4.35M11 19a8 8 0 100-16 8 8 0 000 16z" />
+                </svg>
+                <input
+                  id="category-search"
+                  type="search"
+                  placeholder="Cari sayur, buah, atau bahan dapur..."
+                  class="w-full bg-transparent text-sm text-neutral-800 placeholder:text-neutral-500 focus:outline-none"
+                />
+              </div>
+              <p class="mt-2 text-xs text-neutral-500">Filter otomatis daftar produk berdasarkan nama.</p>
+            </div>
+
+            <div id="category-search-empty" class="hidden mb-6 rounded-2xl border border-brand/10 bg-brand/10 px-4 py-4 text-center text-sm text-brand">
+              Tidak ada produk sesuai kata kunci.
+            </div>
+
+            <div id="category-products-grid">
+              <ProductGrid
+                products={products}
+                isLoading={false}
+                emptyTitle="Belum ada produk"
+                emptyDescription="Belum ada produk untuk kategori ini."
+              />
+            </div>
+
+            <script is:inline type="module">
+              const searchInput = document.getElementById('category-search');
+              const productGrid = document.getElementById('category-products-grid');
+              const emptyMessage = document.getElementById('category-search-empty');
+
+              if (searchInput && productGrid && emptyMessage) {
+                const cards = Array.from(productGrid.querySelectorAll('[data-product-name]'));
+                if (cards.length > 0) {
+                  const normalize = (text) => text.normalize('NFC').toLowerCase();
+
+                  const updateFilter = () => {
+                    const query = normalize(searchInput.value.trim());
+                    let visibleCount = 0;
+
+                    cards.forEach((card) => {
+                      const name = normalize(card.getAttribute('data-product-name') || '');
+                      const isVisible = !query || name.includes(query);
+                      card.classList.toggle('hidden', !isVisible);
+                      if (isVisible) visibleCount += 1;
+                    });
+
+                    productGrid.classList.toggle('hidden', visibleCount === 0);
+                    emptyMessage.classList.toggle('hidden', visibleCount > 0);
+                  };
+
+                  searchInput.addEventListener('input', updateFilter);
+                }
+              }
+            </script>
+
+            {totalPages > 1 && (
+              <nav class="mt-8 flex items-center justify-center gap-3" aria-label="Navigasi halaman">
+                {currentPage > 1 && (
+                  <a
+                    href={pageLink(currentPage - 1)}
+                    class="rounded-lg border border-brand/20 px-3 py-1.5 text-sm text-brand hover:bg-brand/10"
+                  >
+                    ← Sebelumnya
+                  </a>
+                )}
+                <span class="text-sm text-neutral-500">
+                  Halaman {currentPage} dari {totalPages}
+                </span>
+                {currentPage < totalPages && (
+                  <a
+                    href={pageLink(currentPage + 1)}
+                    class="rounded-lg border border-brand/20 px-3 py-1.5 text-sm text-brand hover:bg-brand/10"
+                  >
+                    Selanjutnya →
+                  </a>
+                )}
+              </nav>
+            )}
+          </div>
+        </div>
+      )
+    }
+  </main>
+</Layout>

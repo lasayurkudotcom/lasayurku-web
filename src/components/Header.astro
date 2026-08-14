@@ -1,0 +1,222 @@
+---
+import CartIcon from "./CartIcon.tsx";
+import CartDrawer from "./CartDrawer.tsx";
+
+const currentPath = Astro.url.pathname;
+function isActive(href: string) {
+  if (href === "/") return currentPath === "/";
+  return currentPath === href || currentPath.startsWith(`${href}/`);
+}
+---
+
+<header
+  class="sticky top-0 z-50 bg-white/95 backdrop-blur border-b border-slate-200 shadow-sm"
+>
+  <div class="md:hidden px-4 py-3">
+    <div class="flex items-center justify-between">
+      <a href="/" class="flex items-center">
+        <img
+          src="/logo.webp"
+          alt="LA Sayurku"
+          class="h-10 w-auto object-contain"
+        />
+      </a>
+      <CartIcon client:load />
+    </div>
+
+    <form action="/cari" method="get" class="w-full mt-2">
+      <label for="mobile-header-search" class="sr-only"
+        >Cari sayur, buah, atau bahan dapur</label
+      >
+      <div
+        class="flex w-full items-center gap-2 rounded-full bg-gray-100 px-4 py-2 text-sm text-neutral-700"
+      >
+        <svg
+          xmlns="http://www.w3.org/2000/svg"
+          class="h-5 w-5 flex-shrink-0 text-brand"
+          viewBox="0 0 24 24"
+          fill="none"
+          stroke="currentColor"
+          stroke-width="2"
+        >
+          <path
+            stroke-linecap="round"
+            stroke-linejoin="round"
+            d="M21 21l-4.35-4.35M11 19a8 8 0 100-16 8 8 0 000 16z"></path>
+        </svg>
+        <input
+          id="mobile-header-search"
+          type="search"
+          name="q"
+          placeholder="Cari sayur, buah, atau bahan dapur..."
+          class="w-full bg-transparent text-sm text-neutral-700 placeholder:text-neutral-400 focus:outline-none"
+        />
+      </div>
+    </form>
+  </div>
+
+  <div
+    class="hidden md:flex max-w-7xl mx-auto w-full items-center justify-between px-6 py-3"
+  >
+    <div class="flex items-center">
+      <a href="/" class="flex items-center">
+        <img src="/logo.webp" alt="LA Sayurku" class="h-10 object-contain" />
+      </a>
+    </div>
+
+    <div class="flex-1 max-w-xl mx-8 flex items-center gap-6">
+      <nav class="flex items-center gap-6 text-sm text-neutral-700">
+        <a
+          href="/"
+          class={`hover:text-green-600 transition-colors ${isActive("/") ? "text-green-600 font-bold" : "text-slate-700 font-medium"}`}
+          >Beranda</a
+        >
+        <a
+          href="/c/sayuran"
+          class={`hover:text-green-600 transition-colors ${isActive("/c") ? "text-green-600 font-bold" : "text-slate-700 font-medium"}`}
+          >Kategori</a
+        >
+        <a
+          href="/promo"
+          class={`hover:text-green-600 transition-colors ${isActive("/promo") ? "text-green-600 font-bold" : "text-slate-700 font-medium"}`}
+          >Promo</a
+        >
+      </nav>
+
+      <form action="/cari" method="get" class="flex-1">
+        <label for="desktop-header-search" class="sr-only"
+          >Cari sayur, buah, atau bahan dapur</label
+        >
+        <div
+          class="flex items-center rounded-full bg-gray-100 px-4 py-2.5 text-sm text-neutral-700"
+        >
+          <svg
+            xmlns="http://www.w3.org/2000/svg"
+            class="h-5 w-5 flex-shrink-0 text-brand"
+            viewBox="0 0 24 24"
+            fill="none"
+            stroke="currentColor"
+            stroke-width="2"
+          >
+            <path
+              stroke-linecap="round"
+              stroke-linejoin="round"
+              d="M21 21l-4.35-4.35M11 19a8 8 0 100-16 8 8 0 000 16z"></path>
+          </svg>
+          <input
+            id="desktop-header-search"
+            type="search"
+            name="q"
+            placeholder="Cari sayur, buah, atau bahan dapur..."
+            class="flex-1 bg-transparent text-sm text-neutral-700 placeholder:text-neutral-400 focus:outline-none"
+          />
+        </div>
+      </form>
+    </div>
+
+    <div class="flex items-center gap-4">
+      <div class="flex items-center">
+        <CartIcon client:load />
+      </div>
+
+      <div id="desktop-auth-area" class="hidden md:flex items-center gap-2">
+        <div class="border-l h-6 border-gray-200 mx-1"></div>
+        <div id="auth-buttons" class="hidden items-center gap-2"></div>
+        <div id="auth-user-container" class="hidden items-center gap-2">
+          <a
+            id="auth-user-link"
+            href="/akun"
+            class="flex items-center gap-2 rounded-full border border-gray-200 bg-white px-3 py-1 text-sm font-semibold transition hover:bg-gray-50 shadow-sm"
+          >
+            <span
+              class="inline-flex h-7 w-7 items-center justify-center rounded-full bg-brand/10 text-brand"
+            >
+              <svg
+                xmlns="http://www.w3.org/2000/svg"
+                class="h-4 w-4"
+                viewBox="0 0 24 24"
+                fill="none"
+                stroke="currentColor"
+                stroke-width="1.5"
+              >
+                <path
+                  stroke-linecap="round"
+                  stroke-linejoin="round"
+                  d="M17.982 18.725A7.488 7.488 0 0012 15.75a7.488 7.488 0 00-5.982 2.975m11.963 0a9 9 0 10-11.963 0m11.963 0A8.966 8.966 0 0112 21a8.966 8.966 0 01-5.982-2.275M15 9.75a3 3 0 11-6 0 3 3 0 016 0z"
+                ></path>
+              </svg>
+            </span>
+            <span
+              id="auth-user-label"
+              class="text-[#0D160B] font-semibold text-xs"></span>
+          </a>
+          <button
+            id="public-logout-btn"
+            class="flex items-center gap-1 rounded-xl border border-red-200 bg-red-50 px-2.5 py-1 text-xs font-bold text-red-600 transition hover:bg-red-100"
+            title="Keluar / Logout"
+          >
+            Keluar
+          </button>
+        </div>
+      </div>
+    </div>
+  </div>
+</header>
+
+<!-- Drawer dirender sekali di Header, dikontrol via store isCartOpen dari mana pun -->
+<CartDrawer client:load />
+
+<script type="module">
+  const authButtons = document.getElementById("auth-buttons");
+  const authUserContainer = document.getElementById("auth-user-container");
+  const authUserLabel = document.getElementById("auth-user-label");
+  const logoutBtn = document.getElementById("public-logout-btn");
+
+  function renderAuthHeader() {
+    const token =
+      localStorage.getItem("user_token") || localStorage.getItem("auth_token");
+    const userName = localStorage.getItem("user_nicename");
+
+    const authButtons = document.getElementById("auth-buttons");
+    const authUserContainer = document.getElementById("auth-user-container");
+    const authUserLabel = document.getElementById("auth-user-label");
+
+    if (!authButtons || !authUserContainer || !authUserLabel) return;
+
+    if (token) {
+      authButtons.classList.add("hidden");
+      authUserContainer.classList.remove("hidden");
+      authUserContainer.classList.add("flex");
+      authUserLabel.textContent = userName ? `Halo, ${userName}` : "Akun Saya";
+    } else {
+      authUserContainer.classList.add("hidden");
+      authButtons.classList.remove("hidden");
+      authButtons.innerHTML = `
+        <a href="/login" class="inline-flex items-center justify-center rounded-lg bg-green-100 px-4 py-1.5 text-sm font-semibold text-green-700 hover:bg-green-200 transition">
+          Masuk
+        </a>
+        <a href="/login" class="inline-flex items-center justify-center rounded-lg bg-green-600 px-4 py-1.5 text-sm font-semibold text-white hover:bg-green-700 transition shadow-sm">
+          Daftar
+        </a>
+      `;
+    }
+  }
+
+  if (logoutBtn) {
+    logoutBtn.addEventListener("click", () => {
+      localStorage.clear();
+      document.cookie =
+        "auth_token=; expires=Thu, 01 Jan 1970 00:00:00 UTC; path=/;";
+      document.cookie =
+        "user_token=; expires=Thu, 01 Jan 1970 00:00:00 UTC; path=/;";
+      document.cookie =
+        "admin_token=; expires=Thu, 01 Jan 1970 00:00:00 UTC; path=/;";
+      window.location.href = "/login";
+    });
+  }
+
+  // Jalankan saat load awal & pasca-navigasi Astro
+  renderAuthHeader();
+  document.addEventListener("DOMContentLoaded", renderAuthHeader);
+  document.addEventListener("astro:page-load", renderAuthHeader);
+</script>

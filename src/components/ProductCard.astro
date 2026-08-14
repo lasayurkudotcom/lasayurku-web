@@ -1,0 +1,156 @@
+---
+import type { WooCommerceProduct } from "../lib/woocommerce";
+import {
+  formatRupiah,
+  getDiscountPercentage,
+  getProductUnit,
+} from "../lib/woocommerce";
+
+interface Props {
+  product: WooCommerceProduct;
+}
+
+const { product } = Astro.props;
+
+const image = product.images?.[0];
+const discount = getDiscountPercentage(product);
+const unit = getProductUnit(product);
+const isOutOfStock = product.stock_status === "outofstock";
+---
+
+<article
+  data-product-name={product.name.toLowerCase()}
+  class="group relative flex h-full flex-col justify-between overflow-hidden p-2.5 sm:p-3 rounded-2xl border border-slate-100 bg-white shadow-sm transition-all duration-200 hover:-translate-y-0.5 hover:border-green-300 hover:shadow-md"
+>
+  <a
+    href={`/produk/${product.slug}`}
+    class="relative mb-3 flex aspect-square w-full items-center justify-center overflow-hidden rounded-xl bg-white"
+  >
+    {
+      discount > 0 && (
+        <span class="absolute left-1 top-1 z-10 rounded-full bg-[#f97316] px-2.5 py-0.5 text-[11px] font-bold text-white shadow-sm">
+          Promo -{discount}%
+        </span>
+      )
+    }
+
+    {
+      isOutOfStock && (
+        <div class="absolute inset-0 z-20 flex items-center justify-center bg-white/80 backdrop-blur-sm">
+          <span class="rounded-full bg-neutral-800 px-3 py-1 text-xs font-semibold text-white">
+            Stok Habis
+          </span>
+        </div>
+      )
+    }
+
+    {
+      image ? (
+        <img
+          src={image.src}
+          alt={image.alt || product.name}
+          loading="lazy"
+          class="h-full w-full object-contain transition-transform duration-300 group-hover:scale-105"
+        />
+      ) : (
+        <div class="flex h-full w-full items-center justify-center text-brand/40 bg-gray-50">
+          <svg
+            xmlns="http://www.w3.org/2000/svg"
+            class="h-10 w-10"
+            viewBox="0 0 24 24"
+            fill="none"
+            stroke="currentColor"
+            stroke-width="1.5"
+          >
+            <path
+              stroke-linecap="round"
+              stroke-linejoin="round"
+              d="M3 16.5v-9A2.25 2.25 0 015.25 5.25h13.5A2.25 2.25 0 0121 7.5v9a2.25 2.25 0 01-2.25 2.25H5.25A2.25 2.25 0 013 16.5z"
+            />
+            <path
+              stroke-linecap="round"
+              stroke-linejoin="round"
+              d="M3 16l4.72-4.72a1.5 1.5 0 012.12 0L14 15.5l2.5-2.5a1.5 1.5 0 012.12 0L21 15"
+            />
+          </svg>
+        </div>
+      )
+    }
+  </a>
+
+  <div class="flex flex-1 flex-col">
+    <a href={`/produk/${product.slug}`} class="mb-1.5">
+      <h3
+        class="text-sm font-medium line-clamp-2 text-[#0f172a] hover:text-brand"
+      >
+        {product.name}{unit ? `(${unit})` : ''}
+      </h3>
+    </a>
+
+    <div class="mt-auto flex flex-col gap-2">
+      <div class="flex flex-wrap items-center gap-x-2">
+        {
+          product.on_sale ? (
+            <>
+              <span class="text-xs text-slate-400 line-through">
+                {formatRupiah(product.regular_price)}
+              </span>
+              <span class="text-[#ff1f5a] font-bold text-base sm:text-lg">
+                {formatRupiah(product.price)}
+              </span>
+            </>
+          ) : (
+            <span class="text-green-700 font-bold text-base sm:text-lg">
+              {formatRupiah(product.price)}
+            </span>
+          )
+        }
+      </div>
+
+      <button
+        type="button"
+        disabled={isOutOfStock}
+        data-add-to-cart
+        data-product-id={product.id}
+        data-product-slug={product.slug}
+        data-product-name={product.name}
+        data-product-image={image?.src ?? ""}
+        data-product-price={product.price}
+        data-product-regular-price={product.regular_price}
+        data-product-unit={unit}
+        data-product-stock={product.stock_quantity ?? ""}
+        aria-label={`Tambah ${product.name} ke keranjang`}
+        class="w-full py-2.5 px-4 text-sm font-bold rounded-xl bg-[#2e8b41] hover:bg-[#257335] text-white transition-colors duration-200 active:scale-95 disabled:cursor-not-allowed disabled:bg-neutral-200 disabled:text-neutral-500"
+      >
+        {isOutOfStock ? "Stok Habis" : "+ Tambah"}
+      </button>
+    </div>
+  </div>
+</article>
+
+<script>
+  import { addToCart } from "../stores/cart";
+
+  document.addEventListener("click", (event) => {
+    const button = (event.target as HTMLElement).closest<HTMLButtonElement>(
+      "[data-add-to-cart]",
+    );
+    if (!button || button.disabled) return;
+
+    const stock = button.dataset.productStock;
+
+    addToCart(
+      {
+        id: Number(button.dataset.productId),
+        slug: button.dataset.productSlug ?? "",
+        name: button.dataset.productName ?? "",
+        image: button.dataset.productImage ?? "",
+        price: Number(button.dataset.productPrice ?? 0),
+        regularPrice: Number(button.dataset.productRegularPrice ?? 0),
+        unit: button.dataset.productUnit ?? "",
+        stockQuantity: stock ? Number(stock) : null,
+      },
+      1,
+    );
+  });
+</script>

@@ -1,0 +1,265 @@
+---
+import '../styles/global.css';
+
+interface Props {
+  title?: string;
+  activeModule?: 'dashboard' | 'kasir' | 'packing' | 'kurir' | string;
+  allowedRoles?: string[];
+}
+
+const {
+  title = 'TokoKirim - Sistem Toko & Pengiriman',
+  activeModule = 'dashboard',
+  allowedRoles = ['administrator', 'admin'],
+} = Astro.props;
+---
+
+<!DOCTYPE html>
+<html lang="id">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>{title}</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css">
+    <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@300;400;500;600;700;800;900&display=swap" rel="stylesheet">
+    <style is:global>
+        * { scrollbar-width: thin; scrollbar-color: #1e293b transparent; }
+        ::-webkit-scrollbar { width: 6px; }
+        ::-webkit-scrollbar-track { background: transparent; }
+        ::-webkit-scrollbar-thumb { background: #1e293b; border-radius: 3px; }
+        body { font-family: 'Plus Jakarta Sans', sans-serif; }
+        .nav-item { transition: all .2s ease; border-left: 3px solid transparent; }
+        .nav-item:hover { background: #111833; border-left-color: #34d399; }
+        .nav-item.active { background: #162040; border-left-color: #10b981; }
+        .nav-item.active .nav-icon { color: #34d399; }
+        .nav-item.nav-danger:hover { background: #1c0a0a; border-left-color: #f87171; }
+        .page-enter { animation: pageIn .3s ease forwards; }
+        @keyframes pageIn { from { opacity:0; transform:translateY(12px); } to { opacity:1; transform:translateY(0); } }
+        .card-hover { transition: all .25s ease; }
+        .card-hover:hover { transform: translateY(-2px); box-shadow: 0 8px 25px rgba(0,0,0,.08); }
+        .badge { display:inline-flex; align-items:center; padding:2px 10px; border-radius:9999px; font-size:11px; font-weight:600; letter-spacing:.3px; }
+        .badge-pending { background:#fef3c7; color:#92400e; }
+        .badge-picked { background:#dbeafe; color:#1e40af; }
+        .badge-delivered { background:#d1fae5; color:#065f46; }
+        .badge-cancelled { background:#fee2e2; color:#991b1b; }
+        .stat-card { position:relative; overflow:hidden; }
+        .stat-card::after { content:''; position:absolute; top:-20px; right:-20px; width:80px; height:80px; border-radius:50%; opacity:.08; }
+        .stat-card.green::after { background:#10b981; }
+        .stat-card.amber::after { background:#f59e0b; }
+        .stat-card.rose::after { background:#f43f5e; }
+        .stat-card.sky::after { background:#0ea5e9; }
+        input:focus, select:focus, textarea:focus { outline:none; border-color:#10b981; box-shadow:0 0 0 3px rgba(16,185,129,.12); }
+        .sidebar-section { font-size:10px; letter-spacing:1.5px; text-transform:uppercase; color:#475569; padding:16px 20px 6px; }
+        @media (max-width:768px) {
+            #sidebar { transform:translateX(-100%); position:fixed; z-index:50; }
+            #sidebar.open { transform:translateX(0); }
+        }
+    </style>
+</head>
+<body class="bg-gray-50 text-gray-800 min-h-screen">
+
+<!-- Sidebar -->
+<aside id="sidebar" class="fixed top-0 left-0 h-full w-64 bg-side text-gray-300 flex flex-col transition-transform duration-300 z-50">
+    <div class="p-5 border-b border-white/5">
+        <div class="flex items-center gap-3">
+            <div id="sidebarLogo" class="w-9 h-9 rounded-lg bg-pri-600 flex items-center justify-center overflow-hidden flex-shrink-0">
+                <i class="fa-solid fa-store text-white text-sm sidebar-logo-icon"></i>
+            </div>
+            <div>
+                <h1 class="text-white font-bold text-base leading-tight">LaSayurku</h1>
+                <p class="text-[10px] text-gray-500 tracking-wider">SISTEM TOKO & PENGIRIMAN</p>
+            </div>
+        </div>
+    </div>
+    <nav class="flex-1 overflow-y-auto py-2" id="sideNav">
+        <div class="sidebar-section">Utama</div>
+        <a href="/adminrisman" class={`nav-item flex items-center gap-3 px-5 py-2.5 cursor-pointer ${activeModule === 'dashboard' ? 'active' : ''}`}>
+            <i class="fa-solid fa-chart-pie nav-icon w-5 text-center text-sm"></i><span class="text-sm">Dasbor</span>
+        </a>
+        <a href="/adminrisman/kasir" class={`nav-item flex items-center gap-3 px-5 py-2.5 cursor-pointer ${activeModule === 'kasir' ? 'active' : ''}`}>
+            <i class="fa-solid fa-cash-register nav-icon w-5 text-center text-sm"></i><span class="text-sm">Kasir</span>
+        </a>
+        <a href="/adminrisman/packing" class={`nav-item flex items-center gap-3 px-5 py-2.5 cursor-pointer ${activeModule === 'packing' ? 'active' : ''}`}>
+            <i class="fa-solid fa-box nav-icon w-5 text-center text-sm"></i><span class="text-sm">Packing</span>
+        </a>
+        <a href="/adminrisman/kurir" class={`nav-item flex items-center gap-3 px-5 py-2.5 cursor-pointer ${activeModule === 'kurir' ? 'active' : ''}`}>
+            <i class="fa-solid fa-truck-fast nav-icon w-5 text-center text-sm"></i><span class="text-sm">Kurir</span>
+        </a>
+
+        <!-- Dummy Links -->
+        <div class="sidebar-section">Pesanan</div>
+        <a href="#" class="nav-item flex items-center gap-3 px-5 py-2.5 cursor-pointer" onclick="alert('Ini adalah dummy link (belum diimplementasikan)')">
+            <i class="fa-solid fa-clipboard-list nav-icon w-5 text-center text-sm"></i><span class="text-sm">Semua Pesanan</span>
+        </a>
+        <div class="sidebar-section">Manajemen</div>
+        <a href="#" class="nav-item flex items-center gap-3 px-5 py-2.5 cursor-pointer" onclick="alert('Ini adalah dummy link (belum diimplementasikan)')">
+            <i class="fa-solid fa-users nav-icon w-5 text-center text-sm"></i><span class="text-sm">Pelanggan</span>
+        </a>
+        <a href="#" class="nav-item flex items-center gap-3 px-5 py-2.5 cursor-pointer" onclick="alert('Ini adalah dummy link (belum diimplementasikan)')">
+            <i class="fa-solid fa-boxes-stacked nav-icon w-5 text-center text-sm"></i><span class="text-sm">Daftar Produk</span>
+        </a>
+        <div class="sidebar-section">Sistem</div>
+        <a href="#" id="admin-logout-btn-sidebar" class="nav-item nav-danger flex items-center gap-3 px-5 py-2.5 cursor-pointer">
+            <i class="fa-solid fa-right-from-bracket nav-icon w-5 text-center text-sm text-red-400"></i><span class="text-sm text-red-400">Logout</span>
+        </a>
+    </nav>
+    <div class="p-4 border-t border-white/5">
+        <div class="flex items-center gap-3">
+            <div class="w-8 h-8 rounded-full bg-pri-700 flex items-center justify-center text-white text-xs font-bold" id="sidebarAvatar">A</div>
+            <div class="min-w-0">
+                <p class="text-sm font-semibold text-white truncate" id="sidebarAdminName">Admin</p>
+                <p class="text-[10px] text-gray-500 truncate" id="sidebarAdminRole">Loading...</p>
+            </div>
+        </div>
+    </div>
+</aside>
+
+<!-- Overlay mobile -->
+<div id="sidebarOverlay" class="fixed inset-0 bg-black/50 z-40 hidden"></div>
+
+<!-- Main -->
+<div class="md:ml-64 min-h-screen flex flex-col">
+    <!-- Top Bar -->
+    <header class="sticky top-0 z-30 bg-white/80 backdrop-blur-md border-b border-gray-200 px-4 md:px-6 py-3 flex items-center justify-between shrink-0">
+        <div class="flex items-center gap-3">
+            <button id="mobileSidebarBtn" class="md:hidden w-9 h-9 rounded-lg bg-gray-100 flex items-center justify-center">
+                <i class="fa-solid fa-bars text-sm"></i>
+            </button>
+            <h2 id="pageTitle" class="font-bold text-lg text-gray-900 capitalize">{activeModule}</h2>
+        </div>
+        <div class="flex items-center gap-3">
+            <span class="text-xs text-gray-500 hidden sm:block" id="currentTime"></span>
+            <div class="w-8 h-8 rounded-full bg-pri-600 flex items-center justify-center text-white text-xs font-bold" id="topAvatar">A</div>
+            <button id="admin-logout-btn" class="ml-2 flex items-center gap-1.5 rounded-xl border border-red-200 bg-red-50 px-3 py-1.5 text-xs font-bold text-red-600 shadow-sm transition hover:bg-red-100 hover:text-red-700">
+                <i class="fa-solid fa-right-from-bracket"></i>
+            </button>
+        </div>
+    </header>
+    <!-- Content -->
+    <main id="mainContent" class="p-4 md:p-6 page-enter flex-1 overflow-x-hidden">
+        <slot />
+    </main>
+</div>
+
+<!-- Data Provider for Script -->
+<div id="admin-layout-data" data-allowed-roles={JSON.stringify(allowedRoles)} data-active-module={activeModule} class="hidden"></div>
+
+<script is:inline>
+document.addEventListener('DOMContentLoaded', () => {
+    // Clock
+    function updateClock() {
+        const el = document.getElementById('currentTime');
+        if (el) {
+            const d = new Date();
+            const days = ['Minggu','Senin','Selasa','Rabu','Kamis','Jumat','Sabtu'];
+            el.textContent = `${days[d.getDay()]}, ${d.toLocaleDateString('id-ID',{day:'numeric',month:'long',year:'numeric'})} ${d.toLocaleTimeString('id-ID',{hour:'2-digit',minute:'2-digit'})}`;
+        }
+    }
+    setInterval(updateClock, 1000);
+    updateClock();
+
+    // Sidebar Toggle
+    const sidebar = document.getElementById('sidebar');
+    const overlay = document.getElementById('sidebarOverlay');
+    const mobileBtn = document.getElementById('mobileSidebarBtn');
+    
+    function toggleSidebar() {
+        sidebar.classList.toggle('open');
+        overlay.classList.toggle('hidden');
+    }
+    
+    if(mobileBtn) mobileBtn.addEventListener('click', toggleSidebar);
+    if(overlay) overlay.addEventListener('click', toggleSidebar);
+
+    // Session & Auth (From LaSayurku AdminLayout)
+    const dataEl = document.getElementById('admin-layout-data');
+    const allowedRoles = dataEl ? JSON.parse(dataEl.dataset.allowedRoles || '[]') : [];
+    
+    function getAdminSession() {
+        const role = localStorage.getItem('admin_user_role') || localStorage.getItem('user_role');
+        let tokenKey = 'admin_token';
+        if (role === 'kasir_offline') tokenKey = 'pos_offline_token';
+        else if (role === 'kasir') tokenKey = 'pos_online_token';
+
+        const token = localStorage.getItem(tokenKey) || localStorage.getItem('admin_token') || localStorage.getItem('auth_token') || localStorage.getItem('user_token');
+        const user_nicename = localStorage.getItem('admin_user_nicename') || localStorage.getItem('user_nicename') || 'Admin';
+        if (!token || !role) return null;
+        return { token, role, user_nicename };
+    }
+
+    function clearAdminSession() {
+        localStorage.removeItem('admin_token');
+        localStorage.removeItem('pos_offline_token');
+        localStorage.removeItem('pos_online_token');
+        localStorage.removeItem('admin_user_role');
+        localStorage.removeItem('admin_user_nicename');
+        localStorage.removeItem('auth_token');
+        localStorage.removeItem('user_token');
+        localStorage.removeItem('user_role');
+        localStorage.removeItem('user_nicename');
+        document.cookie = 'auth_token=; expires=Thu, 01 Jan 1970 00:00:00 UTC; path=/;';
+        document.cookie = 'pos_offline_token=; expires=Thu, 01 Jan 1970 00:00:00 UTC; path=/;';
+        document.cookie = 'pos_online_token=; expires=Thu, 01 Jan 1970 00:00:00 UTC; path=/;';
+        document.cookie = 'user_token=; expires=Thu, 01 Jan 1970 00:00:00 UTC; path=/;';
+        document.cookie = 'admin_token=; expires=Thu, 01 Jan 1970 00:00:00 UTC; path=/;';
+        document.cookie = 'user_role=; expires=Thu, 01 Jan 1970 00:00:00 UTC; path=/;';
+        document.cookie = 'admin_user_role=; expires=Thu, 01 Jan 1970 00:00:00 UTC; path=/;';
+    }
+
+    function roleAllowed(role, allowedRolesList) {
+        if (!role) return false;
+        const loweredRole = role.toString().toLowerCase();
+        if (loweredRole.includes('admin') || loweredRole.includes('administrator')) return true;
+        return allowedRolesList.some((allowed) => {
+            const loweredAllowed = allowed.toLowerCase();
+            // Stricter check for cashier roles
+            if (loweredRole === 'kasir_offline' && (loweredAllowed === 'kasir_offline' || loweredAllowed === 'kasiroffline')) return true;
+            if (loweredRole === 'kasir' && loweredAllowed === 'kasir') return true;
+            
+            return loweredRole.includes(loweredAllowed) || loweredRole === loweredAllowed;
+        });
+    }
+
+    const activeSession = getAdminSession();
+    
+    if (!activeSession) {
+        window.location.href = '/login?from=admin';
+    } else {
+        if (!roleAllowed(activeSession.role, allowedRoles)) {
+            window.location.href = '/login?from=admin';
+            return;
+        }
+
+        // Update UI with user info
+        const name = activeSession.user_nicename;
+        document.getElementById('sidebarAdminName').textContent = name;
+        document.getElementById('sidebarAvatar').textContent = name.charAt(0).toUpperCase();
+        document.getElementById('topAvatar').textContent = name.charAt(0).toUpperCase();
+        
+        const rawRole = activeSession.role;
+        const roleLabelMap = {
+            kasir_lasayurku: 'Kasir',
+            packing_lasayurku: 'Packing',
+            kurir_lasayurku: 'Kurir',
+            administrator: 'Administrator',
+            admin: 'Administrator',
+        };
+        document.getElementById('sidebarAdminRole').textContent = roleLabelMap[rawRole] || rawRole;
+    }
+
+    // Logout Events
+    const logoutBtns = [document.getElementById('admin-logout-btn'), document.getElementById('admin-logout-btn-sidebar')];
+    logoutBtns.forEach(btn => {
+        if(btn) {
+            btn.addEventListener('click', (e) => {
+                e.preventDefault();
+                if (!confirm('Yakin ingin logout dari sistem?')) return;
+                clearAdminSession();
+                window.location.href = '/login?from=admin';
+            });
+        }
+    });
+});
+</script>
+</body>
+</html>
