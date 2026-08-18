@@ -208,8 +208,8 @@ export function getAdminRedirect(role: string | null | undefined): string {
   const lowered = role.toString().toLowerCase();
   if (lowered.includes('kurir')) return '/adminrisman/kurir';
   if (lowered.includes('packing')) return '/adminrisman/packing';
-  if (isKasirOfflineRole(lowered)) return '/adminrisman/kasiroffline';
-  if (isKasirOnlineRole(lowered)) return '/adminrisman/kasir';
+  if (isKasirOfflineRole(lowered)) return '/kasir';
+  if (isKasirOnlineRole(lowered)) return '/kasir';
   if (lowered.includes('admin')) return '/adminrisman';
   return '/login';
 }

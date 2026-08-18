@@ -54,17 +54,16 @@ export default function POSApp() {
 
   useEffect(() => {
     if (typeof window === 'undefined') return;
-    const token = localStorage.getItem('pos_offline_token');
+    const token = localStorage.getItem('pos_offline_token') || localStorage.getItem('pos_online_token');
     const role =
       localStorage.getItem('pos_offline_role') ||
+      localStorage.getItem('pos_online_role') ||
       localStorage.getItem('admin_user_role') ||
       '';
-    const offline =
-      role === 'kasir_offline' ||
-      role.includes('kasiroffline') ||
-      (role.includes('kasir') && role.includes('offline'));
+    // Hanya role "kasir" yang bisa akses kasir page
+    const isKasir = role === 'kasir';
     const isAdmin = role.includes('admin');
-    if (!token || (!offline && !isAdmin)) {
+    if (!token || (!isKasir && !isAdmin)) {
       window.location.replace('/login?from=admin&error=denied');
     }
   }, []);

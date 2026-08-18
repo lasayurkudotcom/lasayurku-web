@@ -7,4 +7,12 @@ export default defineConfig({
   output: 'server',
   adapter: cloudflare(),
   integrations: [tailwind(), react()],
+  vite: {
+    resolve: {
+      alias: {
+        '@components': '/src/components',
+        '@lib': '/src/lib',
+      },
+    },
+  },
 });

@@ -47,8 +47,9 @@ export function isAdminRole(role: string | null | undefined): boolean {
 
 export function isKasirOnlinePath(pathname: string): boolean {
   return (
-    pathname.startsWith('/adminrisman/kasir') &&
-    !pathname.startsWith('/adminrisman/kasiroffline')
+    (pathname === '/kasir' || pathname.startsWith('/kasir/')) ||
+    (pathname.startsWith('/adminrisman/kasir') &&
+      !pathname.startsWith('/adminrisman/kasiroffline'))
   );
 }
 

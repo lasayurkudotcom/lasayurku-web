@@ -14,6 +14,25 @@ export async function onRequest(context, next) {
     const url = new URL(request.url);
     const pathname = url.pathname;
 
+    if (pathname === '/kasir' || pathname.startsWith('/kasir/')) {
+      const cookies = parseCookieHeader(request.headers.get('cookie') || '');
+      const token = cookies['pos_online_token'] || cookies['admin_token'] || cookies['auth_token'] || cookies['user_token'] || '';
+      const userRole = (cookies['pos_online_role'] || cookies['admin_user_role'] || cookies['user_role'] || '').toLowerCase();
+
+      // Allow unauthenticated access untuk login overlay (page akan show login overlay client-side)
+      // Hanya reject jika token ada tapi role salah
+      if (token && !isKasirOnlineRole(userRole)) {
+        return context.redirect
+          ? context.redirect('/login?from=admin&error=denied')
+          : new Response(null, {
+              status: 302,
+              headers: { Location: '/login?from=admin&error=denied' },
+            });
+      }
+
+      return next();
+    }
+
     if (!pathname.startsWith('/adminrisman')) {
       return next();
     }
@@ -107,8 +126,8 @@ export async function onRequest(context, next) {
         }
         if (isKasirOnline) {
           return context.redirect
-            ? context.redirect('/adminrisman/kasir')
-            : new Response(null, { status: 302, headers: { Location: '/adminrisman/kasir' } });
+            ? context.redirect('/kasir')
+            : new Response(null, { status: 302, headers: { Location: '/kasir' } });
         }
         return context.redirect
           ? context.redirect('/login?from=admin')
