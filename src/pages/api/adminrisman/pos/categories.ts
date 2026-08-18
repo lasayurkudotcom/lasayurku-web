@@ -11,7 +11,7 @@ function getAuthHeader(): string {
   return `Basic ${token}`;
 }
 
-export const GET: APIRoute = async () => {
+export const GET: APIRoute = async ({ url }) => {
   if (!WC_URL || !CONSUMER_KEY || !CONSUMER_SECRET) {
     return new Response(JSON.stringify({ categories: [] }), {
       status: 200,
@@ -20,9 +20,13 @@ export const GET: APIRoute = async () => {
   }
 
   const base = WC_URL.replace(/\/$/, '');
+  const requestedPerPage = Number(url.searchParams.get('per_page') || '30');
+  const perPage = Number.isFinite(requestedPerPage)
+    ? Math.min(Math.max(requestedPerPage, 1), 50)
+    : 30;
 
   try {
-    const res = await fetch(`${base}/wp-json/wc/v3/products/categories?per_page=100`, {
+    const res = await fetch(`${base}/wp-json/wc/v3/products/categories?_fields=id,name,slug,parent,count&per_page=${perPage}&hide_empty=true`, {
       headers: {
         Authorization: getAuthHeader(),
         'Content-Type': 'application/json',

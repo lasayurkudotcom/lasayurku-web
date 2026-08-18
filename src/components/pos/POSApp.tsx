@@ -4,6 +4,7 @@ import { Input } from '../ui/Input';
 import { Card, CardContent } from '../ui/Card';
 import { Badge } from '../ui/Badge';
 import { generateDynamicQris } from '../../lib/qris';
+import { isAdminRole, isKasirOnlineRole } from '../../lib/posAuth';
 
 interface Product {
   id: number;
@@ -54,16 +55,17 @@ export default function POSApp() {
 
   useEffect(() => {
     if (typeof window === 'undefined') return;
-    const token = localStorage.getItem('pos_offline_token') || localStorage.getItem('pos_online_token');
+    const token = localStorage.getItem('pos_offline_token') || localStorage.getItem('pos_online_token') || localStorage.getItem('admin_token') || localStorage.getItem('auth_token');
     const role =
       localStorage.getItem('pos_offline_role') ||
       localStorage.getItem('pos_online_role') ||
       localStorage.getItem('admin_user_role') ||
+      localStorage.getItem('user_role') ||
       '';
-    // Hanya role "kasir" yang bisa akses kasir page
-    const isKasir = role === 'kasir';
-    const isAdmin = role.includes('admin');
-    if (!token || (!isKasir && !isAdmin)) {
+
+    const isKasirAccess = isKasirOnlineRole(role);
+    const isAdmin = isAdminRole(role);
+    if (!token || (!isKasirAccess && !isAdmin)) {
       window.location.replace('/login?from=admin&error=denied');
     }
   }, []);
@@ -81,22 +83,18 @@ export default function POSApp() {
   const handleLogout = () => {
     if (confirm('Apakah Anda yakin ingin keluar dari Kasir POS?')) {
       if (typeof window !== 'undefined') {
-        localStorage.removeItem('pos_offline_token');
-        localStorage.removeItem('pos_offline_role');
-        localStorage.removeItem('pos_offline_nicename');
-        document.cookie =
-          'pos_offline_token=; expires=Thu, 01 Jan 1970 00:00:00 UTC; path=/;';
-        document.cookie =
-          'pos_offline_role=; expires=Thu, 01 Jan 1970 00:00:00 UTC; path=/;';
-        document.cookie =
-          'pos_offline_nicename=; expires=Thu, 01 Jan 1970 00:00:00 UTC; path=/;';
-        const stillOnline = localStorage.getItem('pos_online_token');
-        if (!stillOnline) {
-          localStorage.removeItem('admin_user_role');
-          localStorage.removeItem('user_role');
-          document.cookie =
-            'admin_user_role=; expires=Thu, 01 Jan 1970 00:00:00 UTC; path=/;';
-        }
+        const keysToClear = [
+          'pos_offline_token', 'pos_offline_role', 'pos_offline_nicename',
+          'pos_online_token', 'pos_online_role', 'pos_online_nicename',
+          'admin_token', 'auth_token', 'user_token',
+          'admin_user_role', 'user_role',
+          'admin_user_nicename', 'user_nicename', 'admin_user_email', 'user_email',
+        ];
+
+        keysToClear.forEach((key) => localStorage.removeItem(key));
+        keysToClear.forEach((key) => {
+          document.cookie = `${key}=; expires=Thu, 01 Jan 1970 00:00:00 UTC; path=/;`;
+        });
         window.location.href = '/login?from=admin';
       }
     }
@@ -104,7 +102,7 @@ export default function POSApp() {
 
   const fetchCategories = async () => {
     try {
-      const res = await fetch('/api/adminrisman/pos/categories');
+      const res = await fetch('/api/adminrisman/pos/categories?per_page=30');
       if (res.ok) {
         const data = await res.json();
         const list = Array.isArray(data)
@@ -120,7 +118,7 @@ export default function POSApp() {
   const fetchProducts = async (catId?: number | null, search?: string) => {
     setIsLoading(true);
     try {
-      let url = '/api/adminrisman/pos/products?per_page=50';
+      let url = '/api/adminrisman/pos/products?per_page=20';
       if (catId) url += `&category=${catId}`;
       if (search) url += `&search=${encodeURIComponent(search)}`;
 

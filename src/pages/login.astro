@@ -188,16 +188,29 @@ import Layout from "../layouts/Layout.astro";
   } from '../lib/adminAuth';
   import { resolveRoleFromLoginHints } from '../lib/posAuth';
 
-  // Hanya bersihkan session umum di halaman login; token POS offline/online tetap terpisah
+  // Hapus semua sesi lama agar login tidak otomatis masuk dari token yang tertinggal
   (function clearLegacySessionOnLoginPage() {
-    localStorage.removeItem('auth_token');
-    localStorage.removeItem('user_token');
-    localStorage.removeItem('admin_token');
-    localStorage.removeItem('user_role');
-    localStorage.removeItem('admin_user_role');
-    document.cookie = 'auth_token=; expires=Thu, 01 Jan 1970 00:00:00 UTC; path=/;';
-    document.cookie = 'user_token=; expires=Thu, 01 Jan 1970 00:00:00 UTC; path=/;';
-    document.cookie = 'admin_token=; expires=Thu, 01 Jan 1970 00:00:00 UTC; path=/;';
+    const keysToClear = [
+      'auth_token', 'user_token', 'admin_token',
+      'user_role', 'admin_user_role',
+      'user_nicename', 'admin_user_nicename', 'user_email', 'admin_user_email',
+      'pos_online_token', 'pos_online_role', 'pos_online_nicename',
+      'pos_offline_token', 'pos_offline_role', 'pos_offline_nicename',
+    ];
+
+    keysToClear.forEach((key) => localStorage.removeItem(key));
+
+    const cookiesToClear = [
+      'auth_token', 'user_token', 'admin_token',
+      'user_role', 'admin_user_role',
+      'user_nicename', 'admin_user_nicename', 'user_email', 'admin_user_email',
+      'pos_online_token', 'pos_online_role', 'pos_online_nicename',
+      'pos_offline_token', 'pos_offline_role', 'pos_offline_nicename',
+    ];
+
+    cookiesToClear.forEach((key) => {
+      document.cookie = `${key}=; expires=Thu, 01 Jan 1970 00:00:00 UTC; path=/;`;
+    });
   })();
 
   document.addEventListener("DOMContentLoaded", () => {

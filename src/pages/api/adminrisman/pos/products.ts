@@ -22,9 +22,12 @@ export const GET: APIRoute = async ({ url }) => {
   const base = WC_URL.replace(/\/$/, '');
   const search = url.searchParams.get('search') || '';
   const category = url.searchParams.get('category') || '';
-  const perPage = url.searchParams.get('per_page') || '50';
+  const requestedPerPage = Number(url.searchParams.get('per_page') || '20');
+  const perPage = Number.isFinite(requestedPerPage)
+    ? Math.min(Math.max(requestedPerPage, 1), 30)
+    : 20;
 
-  let wcApiUrl = `${base}/wp-json/wc/v3/products?per_page=${perPage}&status=publish`;
+  let wcApiUrl = `${base}/wp-json/wc/v3/products?_fields=id,name,price,regular_price,sale_price,stock_quantity,stock_status,images,categories,slug&per_page=${perPage}&status=publish`;
   if (search) wcApiUrl += `&search=${encodeURIComponent(search)}`;
   if (category) wcApiUrl += `&category=${category}`;
 
