@@ -1,6 +1,7 @@
 ---
 export const prerender = false;
 import POSApp from '@components/pos/POSApp';
+
 const title = 'Kasir LaSayurku';
 ---
 
@@ -13,7 +14,7 @@ const title = 'Kasir LaSayurku';
     <link href="https://cdn.jsdelivr.net/npm/tailwindcss@2.2.19/dist/tailwind.min.css" rel="stylesheet" />
     <link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;600;700&family=DM+Sans:wght@300;400;500;600;700&display=swap" rel="stylesheet" />
     <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css" rel="stylesheet" />
-    <style>
+    <style is:global>
       :root {
         --bg: #f8fafc;
         --card: #ffffff;
@@ -37,7 +38,7 @@ const title = 'Kasir LaSayurku';
         min-height: 100vh;
       }
       h1, h2, h3, h4, h5 { font-family: 'Space Grotesk', sans-serif; }
-      button, input { font: inherit; }
+      button, input, select { font: inherit; }
 
       .sidebar {
         position: fixed; left: 0; top: 0; bottom: 0; width: 84px; background: #ffffff;
@@ -65,10 +66,11 @@ const title = 'Kasir LaSayurku';
       .page { display: none; }
       .page.active { display: block; }
 
-      .input {
+      .input, select.input {
         background: #f1f5f9 !important; border: 1px solid transparent !important; border-radius: 999px; padding: 12px 20px; color: var(--fg); font-size: 14px; width: 100%; outline: none; transition: all 0.2s ease;
       }
       .input:focus { background: #ffffff !important; border-color: var(--accent) !important; box-shadow: 0 0 0 3px rgba(22,128,61,0.1); }
+      select.input { appearance: none; cursor: pointer; }
 
       .btn {
         border: none; border-radius: 12px; font-weight: 700; cursor: pointer; transition: all 0.2s ease;
@@ -95,205 +97,31 @@ const title = 'Kasir LaSayurku';
       .stat-value { font-size: clamp(1.4rem, 2vw, 2rem); font-weight: 800; margin-top: 4px; }
       .muted { color: var(--muted); }
 
-      /* BARIS KATEGORI BERGAMBAR (TOP CATEGORY BAR) */
-      .top-cat-bar {
-        display: flex;
-        align-items: center;
-        gap: 16px;
-        overflow-x: auto;
-        padding: 8px 4px 16px;
-        margin-bottom: 20px;
-        scrollbar-width: none;
+      .tab-filter-bar {
+        display: flex; gap: 6px; background: #ffffff; border: 1px solid #e2e8f0; border-radius: 999px; padding: 4px; flex-wrap: wrap;
       }
-      .top-cat-bar::-webkit-scrollbar { display: none; }
-      .top-cat-item {
-        display: flex;
-        flex-direction: column;
-        align-items: center;
-        gap: 6px;
-        cursor: pointer;
-        flex-shrink: 0;
-        transition: all 0.2s ease;
-        background: transparent;
-        border: none;
+      .tab-btn {
+        border: none; border-radius: 999px; padding: 8px 16px; font-size: 13px; font-weight: 600; color: var(--muted); background: transparent; cursor: pointer; transition: all 0.2s ease;
       }
-      .top-cat-icon {
-        width: 60px;
-        height: 60px;
-        border-radius: 50%;
-        background: #ffffff;
-        border: 2px solid #e2e8f0;
-        display: flex;
-        align-items: center;
-        justify-content: center;
-        overflow: hidden;
-        box-shadow: 0 2px 8px rgba(0,0,0,0.04);
-        transition: all 0.2s ease;
-        padding: 4px;
-      }
-      .top-cat-icon img {
-        width: 100%;
-        height: 100%;
-        object-fit: contain;
-        border-radius: 50%;
-      }
-      .top-cat-icon i {
-        font-size: 22px;
-        color: var(--accent);
-      }
-      .top-cat-item:hover .top-cat-icon,
-      .top-cat-item.active .top-cat-icon {
-        border-color: var(--accent);
-        background: var(--accent-soft);
-        transform: translateY(-2px);
-      }
-      .top-cat-label {
-        font-size: 11px;
-        font-weight: 700;
-        color: var(--muted);
-        text-align: center;
-        max-width: 80px;
-        white-space: nowrap;
-        overflow: hidden;
-        text-overflow: ellipsis;
-      }
-      .top-cat-item.active .top-cat-label { color: var(--accent); font-weight: 800; }
+      .tab-btn:hover { color: var(--fg); }
+      .tab-btn.active { background: var(--accent); color: white; box-shadow: 0 2px 6px rgba(22,128,61,0.2); }
 
-      /* SIDEBAR SUB KATEGORI (RAPI & MODERN) */
-      .subcat-sidebar {
-        width: 220px;
-        flex-shrink: 0;
-        background: #ffffff;
-        border: 1px solid #e2e8f0;
-        border-radius: 20px;
-        padding: 18px 14px;
-        box-shadow: var(--shadow);
+      .order-list { display: flex; flex-direction: column; gap: 16px; }
+      .order-card {
+        background: #ffffff; border: 1px solid #e2e8f0; border-radius: 20px; padding: 20px; display: flex; justify-content: space-between; align-items: flex-start; gap: 20px; transition: box-shadow 0.2s ease;
       }
-      .subcat-title-label { font-size: 10px; font-weight: 800; text-transform: uppercase; letter-spacing: .1em; color: var(--muted); margin-bottom: 2px; }
-      .subcat-title-main { font-size: 16px; font-weight: 800; color: var(--fg); margin-bottom: 14px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
-      .subcat-list { display: flex; flex-direction: column; gap: 4px; }
-      .subcat-btn {
-        display: flex;
-        align-items: center;
-        justify-content: space-between;
-        width: 100%;
-        padding: 9px 12px;
-        border-radius: 12px;
-        font-size: 13px;
-        font-weight: 600;
-        color: var(--fg);
-        background: transparent;
-        border: none;
-        cursor: pointer;
-        transition: all 0.2s ease;
-        text-align: left;
-      }
-      .subcat-btn:hover { background: #f8fafc; color: var(--accent); }
-      .subcat-btn.active {
-        background: var(--accent);
-        color: #ffffff;
-        font-weight: 700;
-      }
-      .subcat-btn-text {
-        overflow: hidden;
-        text-overflow: ellipsis;
-        white-space: nowrap;
-        padding-right: 8px;
-      }
-      .subcat-badge {
-        font-size: 11px;
-        font-weight: 800;
-        padding: 2px 8px;
-        border-radius: 999px;
-        background: #f1f5f9;
-        color: var(--accent);
-        flex-shrink: 0;
-      }
-      .subcat-btn.active .subcat-badge {
-        background: rgba(255, 255, 255, 0.22);
-        color: #ffffff;
-      }
-
-      /* KARTU PRODUK MODERN & RAPI */
-      .product-card {
-        background: #ffffff;
-        border: 1px solid #e2e8f0;
-        border-radius: 18px;
-        padding: 14px;
-        transition: all 0.2s ease;
-        display: flex;
-        flex-direction: column;
-        justify-content: space-between;
-        height: 100%;
-        box-shadow: 0 2px 8px rgba(0,0,0,0.02);
-      }
-      .product-card:hover {
-        border-color: var(--accent);
-        box-shadow: 0 10px 25px rgba(22, 128, 61, 0.1);
-        transform: translateY(-3px);
-      }
-      .product-card-img-wrapper {
-        width: 100%;
-        aspect-ratio: 1 / 1;
-        background: #ffffff;
-        border-radius: 14px;
-        overflow: hidden;
-        display: flex;
-        align-items: center;
-        justify-content: center;
-        margin-bottom: 12px;
-      }
-      .product-card-image {
-        width: 100%;
-        height: 100%;
-        object-fit: contain;
-        padding: 4px;
-      }
-      .product-card-name {
-        font-size: 13px;
-        font-weight: 700;
-        color: var(--fg);
-        line-height: 1.35;
-        margin-bottom: 4px;
-        height: 36px;
-        display: -webkit-box;
-        -webkit-line-clamp: 2;
-        -webkit-box-orient: vertical;
-        overflow: hidden;
-      }
-      .product-card-price {
-        font-size: 14px;
-        font-weight: 800;
-        color: var(--fg);
-        margin-bottom: 2px;
-      }
-      .product-card-stock {
-        font-size: 12px;
-        font-weight: 600;
-        color: var(--muted);
-        margin-bottom: 10px;
-      }
-      .product-card-action-btn {
-        width: 100%;
-        padding: 8px;
-        font-size: 12px;
-        font-weight: 700;
-        border: 1px solid #e2e8f0;
-        background: #ffffff;
-        border-radius: 10px;
-        cursor: pointer;
-        transition: all 0.2s ease;
-        display: inline-flex;
-        align-items: center;
-        justify-content: center;
-        gap: 6px;
-        color: var(--fg);
-      }
-      .product-card-action-btn:hover {
-        background: var(--accent-soft);
-        color: var(--accent);
-        border-color: var(--accent);
-      }
+      .order-card:hover { box-shadow: 0 8px 24px rgba(15,23,42,0.06); }
+      .order-info { flex: 1; min-width: 0; }
+      .order-meta { display: flex; align-items: center; gap: 8px; margin-bottom: 4px; flex-wrap: wrap; }
+      .order-id { font-size: 12px; font-weight: 800; color: var(--muted); letter-spacing: 0.05em; }
+      .order-customer { font-size: 16px; font-weight: 800; color: var(--fg); margin-bottom: 6px; }
+      .order-address { font-size: 13px; color: var(--muted); display: flex; align-items: center; gap: 6px; }
+      .order-actions { display: flex; flex-direction: column; align-items: flex-end; gap: 10px; }
+      .status-badge { padding: 6px 12px; border-radius: 999px; font-size: 11px; font-weight: 800; text-transform: uppercase; letter-spacing: 0.05em; }
+      .status-pending { background: #fef3c7; color: #d97706; }
+      .status-processing { background: #dbeafe; color: #2563eb; }
+      .status-completed { background: #dcfce7; color: #16803d; }
+      .status-cancelled { background: #fee2e2; color: #dc2626; }
 
       @media (max-width: 860px) {
         .stok-layout-container { flex-direction: column !important; }
@@ -303,13 +131,14 @@ const title = 'Kasir LaSayurku';
         .nav-group { flex-direction: row; gap: 10px; }
         .nav-spacer { display: none; }
         .main { margin-left: 0; padding: 18px 14px 26px; }
+        .order-card { flex-direction: column; }
+        .order-actions { width: 100%; flex-direction: row; justify-content: space-between; align-items: center; }
       }
     </style>
   </head>
   <body>
     <div class="toast-container" id="toastContainer"></div>
 
-    <!-- SIDEBAR NAVIGATION -->
     <nav class="sidebar" aria-label="Menu utama">
       <div class="logo">K</div>
       <div class="nav-group">
@@ -322,28 +151,24 @@ const title = 'Kasir LaSayurku';
       <div class="nav-item" id="navLogout" title="Keluar"><i class="fas fa-right-from-bracket" style="color: var(--danger);"></i></div>
     </nav>
 
-    <!-- KONTEN UTAMA -->
     <main class="main">
-      <!-- PAGE KASIR (REACT APPS OFFLINE) -->
       <section class="page active" id="pageKasir">
         <div id="kasir-offline-root" class="min-h-screen bg-slate-50 text-slate-900 rounded-2xl overflow-hidden p-2">
           <POSApp client:only="react" />
         </div>
       </section>
 
-      <!-- PAGE STOK -->
       <section class="page" id="pageStok">
         <div class="page-header">
           <div>
             <h1>Manajemen Stok</h1>
             <p class="muted" style="margin-top:4px;">Sinkronisasi otomatis dari server WooCommerce.</p>
           </div>
-          <button id="btnRefreshStok" class="btn btn-primary" style="padding:10px 18px;">
-            <i class="fas fa-sync-alt" id="iconRefreshStok" style="margin-right:6px;"></i> Refresh
+          <button id="btnOpenUpdateStokModal" class="btn btn-primary" style="padding:10px 18px;">
+            <i class="fas fa-boxes" style="margin-right:6px;"></i> Update Stok
           </button>
         </div>
 
-        <!-- STATS CARD -->
         <div class="stats-grid">
           <div class="stat-card">
             <div class="stat-label">Produk Aktif</div>
@@ -359,79 +184,31 @@ const title = 'Kasir LaSayurku';
           </div>
         </div>
 
-        <!-- BARIS KATEGORI UTAMA (TOP CATEGORY BAR WITH IMAGES) -->
-        <div class="top-cat-bar" id="topCategoryBar">
-          <button class="top-cat-item active" data-top-cat="all">
-            <div class="top-cat-icon"><i class="fas fa-th-large"></i></div>
-            <span class="top-cat-label">Semua</span>
-          </button>
-        </div>
-
-        <!-- LAYOUT 2 KOLOM (SIDEBAR SUB KATEGORI + KATALOG PRODUK) -->
         <div class="stok-layout-container" style="display: flex; gap: 24px; align-items: flex-start;">
-          
-          <!-- SIDEBAR SUB KATEGORI (KIRI) -->
-          <aside class="subcat-sidebar">
-            <div class="subcat-title-label">Sub Kategori</div>
-            <div class="subcat-title-main" id="subcatTitleMain">Semua Produk</div>
-            
-            <div class="subcat-list" id="subcatList">
-              <!-- Sub kategori dimasukkan via JS -->
-            </div>
+          <aside class="subcat-sidebar" style="width: 220px; flex-shrink: 0; background: #ffffff; border: 1px solid #e2e8f0; border-radius: 20px; padding: 18px 14px; box-shadow: var(--shadow);">
+            <div style="font-size: 10px; font-weight: 800; text-transform: uppercase; letter-spacing: .1em; color: var(--muted); margin-bottom: 2px;">Sub Kategori</div>
+            <div id="subcatTitleMain" style="font-size: 16px; font-weight: 800; color: var(--fg); margin-bottom: 14px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;">Semua Produk</div>
+            <div id="subcatList" style="display: flex; flex-direction: column; gap: 4px;"></div>
           </aside>
 
-          <!-- KATALOG PRODUK (KANAN) -->
           <div style="flex: 1; min-width: 0;">
-            <!-- SEARCH BAR & FILTER TIPE STOK -->
             <div style="display: flex; gap: 12px; margin-bottom: 20px; align-items: center; flex-wrap: wrap;">
               <div style="position: relative; flex: 1; min-width: 240px;">
                 <i class="fas fa-search" style="position: absolute; left: 16px; top: 50%; transform: translateY(-50%); color: var(--muted);"></i>
                 <input type="text" class="input" id="searchStok" placeholder="Cari sayur, buah, atau bahan dapur..." style="padding-left: 44px;" />
               </div>
-              
               <div style="display: flex; gap: 6px; background: #ffffff; border: 1px solid #e2e8f0; border-radius: 999px; padding: 4px;">
                 <button class="stok-filter-btn active" data-stok-filter="all" style="border:none; border-radius:999px; padding:6px 14px; font-size:12px;">Semua</button>
                 <button class="stok-filter-btn" data-stok-filter="low" style="border:none; border-radius:999px; padding:6px 14px; font-size:12px;">Stok Rendah</button>
                 <button class="stok-filter-btn" data-stok-filter="out" style="border:none; border-radius:999px; padding:6px 14px; font-size:12px;">Stok Habis</button>
               </div>
-
-              <button id="btnViewToggle" class="btn" style="padding: 10px 14px; border: 1px solid #e2e8f0; background: #fff; color: var(--muted); border-radius: 12px;">
-                <i class="fas fa-th-large"></i>
-              </button>
             </div>
 
-            <!-- GRID PRODUK -->
-            <div id="stokGridView" style="display: grid; grid-template-columns: repeat(auto-fill, minmax(170px, 1fr)); gap: 16px; margin-bottom: 20px;">
-              <!-- Inserted via JS -->
-            </div>
-
-            <!-- TABLE VIEW -->
-            <div id="stokTableView" style="display: none; background: #fff; border: 1px solid #e2e8f0; border-radius: 20px; overflow: hidden;">
-              <div style="overflow-x: auto;">
-                <table style="width: 100%; border-collapse: collapse; text-align: left; font-size: 14px;">
-                  <thead>
-                    <tr style="background: #f8fafc; border-bottom: 1px solid #e2e8f0; color: var(--muted); font-size: 12px; text-transform: uppercase;">
-                      <th style="padding: 14px 18px;">Produk</th>
-                      <th style="padding: 14px 18px;">Kategori</th>
-                      <th style="padding: 14px 18px;">Harga</th>
-                      <th style="padding: 14px 18px; text-align: center;">Jumlah Stok</th>
-                      <th style="padding: 14px 18px; text-align: center;">Status</th>
-                      <th style="padding: 14px 18px; text-align: center;">Aksi</th>
-                    </tr>
-                  </thead>
-                  <tbody id="stokTableBody">
-                    <tr>
-                      <td colspan="6" style="text-align: center; padding: 40px; color: var(--muted);">Memuat inventaris produk...</td>
-                    </tr>
-                  </tbody>
-                </table>
-              </div>
-            </div>
+            <div id="stokGridView" style="display: grid; grid-template-columns: repeat(auto-fill, minmax(170px, 1fr)); gap: 16px; margin-bottom: 20px;"></div>
           </div>
         </div>
       </section>
 
-      <!-- PAGE HISTORI PENJUALAN -->
       <section class="page" id="pageHistori">
         <div class="page-header">
           <div>
@@ -461,7 +238,6 @@ const title = 'Kasir LaSayurku';
               <input type="text" class="input" id="searchHistory" placeholder="Cari No. Order atau Pelanggan..." style="padding-left:40px;" />
             </div>
           </div>
-
           <div style="overflow-x:auto;">
             <table style="width:100%; border-collapse:collapse; text-align:left; font-size:14px;">
               <thead>
@@ -475,16 +251,13 @@ const title = 'Kasir LaSayurku';
                 </tr>
               </thead>
               <tbody id="histTableBody">
-                <tr>
-                  <td colspan="6" style="text-align:center; padding:40px; color:var(--muted);">Memuat histori transaksi...</td>
-                </tr>
+                <tr><td colspan="6" style="text-align:center; padding:40px; color:var(--muted);">Memuat histori transaksi...</td></tr>
               </tbody>
             </table>
           </div>
         </div>
       </section>
 
-      <!-- PAGE COD -->
       <section class="page" id="pageCod">
         <div class="page-header">
           <div>
@@ -496,49 +269,110 @@ const title = 'Kasir LaSayurku';
           </button>
         </div>
 
-        <div id="codOrdersEmpty" class="card" style="display:block; background:#fff; border:1px solid #e2e8f0; border-radius:20px; padding:24px;">
-          <p class="muted">Belum ada pesanan web yang menunggu konfirmasi.</p>
+        <div class="stats-grid">
+          <div class="stat-card">
+            <div class="stat-label">Total Orderan</div>
+            <div class="stat-value" id="codStatTotal">0</div>
+          </div>
+          <div class="stat-card">
+            <div class="stat-label">Menunggu Pembayaran</div>
+            <div class="stat-value" id="codStatPending" style="color:var(--warn);">0</div>
+          </div>
+          <div class="stat-card">
+            <div class="stat-label">Sudah Dibayar / Diproses</div>
+            <div class="stat-value" id="codStatPaid" style="color:var(--accent);">0</div>
+          </div>
         </div>
 
-        <div id="codOrdersGrid" style="display:grid;grid-template-columns:repeat(auto-fit,minmax(340px,1fr));gap:20px;"></div>
+        <div style="display: flex; gap: 12px; margin-bottom: 20px; align-items: center; flex-wrap: wrap;">
+          <div style="position: relative; flex: 1; min-width: 240px;">
+            <i class="fas fa-search" style="position: absolute; left: 16px; top: 50%; transform: translateY(-50%); color: var(--muted);"></i>
+            <input type="text" class="input" id="searchCod" placeholder="Cari nama pelanggan atau no order..." style="padding-left: 44px;" />
+          </div>
+          <div class="tab-filter-bar">
+            <button class="tab-btn active" data-cod-status="all">Semua</button>
+            <button class="tab-btn" data-cod-status="pending,on-hold">Menunggu Bayar</button>
+            <button class="tab-btn" data-cod-status="processing">Diproses</button>
+            <button class="tab-btn" data-cod-status="completed">Selesai</button>
+          </div>
+        </div>
+
+        <div class="order-list" id="codOrdersList">
+          <div style="text-align:center; padding:40px; color:var(--muted);">Memuat data pesanan...</div>
+        </div>
       </section>
     </main>
 
-    <!-- MODAL EDIT STOK -->
-    <div class="modal-overlay" id="modalEditStok">
-      <div class="modal" style="max-width: 380px;">
-        <h3 style="font-size: 20px; font-weight: 800; margin-bottom: 6px;"><i class="fas fa-boxes" style="color:var(--accent); margin-right:8px;"></i>Update Stok</h3>
-        <p style="color:var(--muted); font-size: 13px; margin-bottom: 16px;" id="modalStokProductName">Nama Produk</p>
+    <!-- MODAL UPDATE STOK -->
+    <div class="modal-overlay" id="modalUpdateStok">
+      <div class="modal" style="max-width: 420px;">
+        <h3 style="font-size: 20px; font-weight: 800; margin-bottom: 20px; display:flex; align-items:center; gap:8px;">
+          <i class="fas fa-boxes" style="color:var(--accent);"></i> Update Stok
+        </h3>
         
-        <div style="margin-bottom:20px;">
-          <label style="font-size: 12px; font-weight: 700; color: var(--muted); display: block; margin-bottom: 6px; text-transform: uppercase;">Jumlah Stok Baru</label>
-          <input type="number" class="input" id="modalStokQtyInput" min="0" style="font-size: 18px; font-weight: 700; text-align: center; border-radius:12px !important;" />
+        <div style="margin-bottom:16px;">
+          <label style="font-size: 12px; font-weight: 700; color: var(--muted); display: block; margin-bottom: 6px; text-transform: uppercase;">Pilih Produk</label>
+          <select id="updateStokProductSelect" class="input" style="border-radius:12px !important;">
+            <option value="">Memuat produk...</option>
+          </select>
+        </div>
+
+        <div style="display:flex; gap:12px; margin-bottom:16px;">
+          <div style="flex:1;">
+            <label style="font-size: 12px; font-weight: 700; color: var(--muted); display: block; margin-bottom: 6px; text-transform: uppercase;">Tipe Stok</label>
+            <select id="updateStokType" class="input" style="border-radius:12px !important;">
+              <option value="in">Stok Masuk (+)</option>
+              <option value="out">Stok Keluar (-)</option>
+            </select>
+          </div>
+          <div style="width:120px;">
+            <label style="font-size: 12px; font-weight: 700; color: var(--muted); display: block; margin-bottom: 6px; text-transform: uppercase;">Jumlah</label>
+            <input type="number" class="input" id="updateStokQty" min="1" value="0" style="font-size: 18px; font-weight: 700; text-align: center; border-radius:12px !important;" />
+          </div>
+        </div>
+
+        <div style="margin-bottom:24px;">
+          <label style="font-size: 12px; font-weight: 700; color: var(--muted); display: block; margin-bottom: 6px; text-transform: uppercase;">Catatan (Opsional)</label>
+          <input type="text" class="input" id="updateStokNote" placeholder="Contoh: restock dari supplier" style="border-radius:12px !important;" />
         </div>
 
         <div style="display: flex; gap: 10px;">
-          <button class="btn" style="flex: 1; border: 1px solid #e2e8f0; background: white; padding: 12px;" id="btnCancelEditStok">Batal</button>
-          <button class="btn btn-primary" style="flex: 1; padding: 12px;" id="btnSaveEditStok">Simpan</button>
+          <button class="btn" style="flex: 1; border: 1px solid #e2e8f0; background: white; padding: 12px;" id="btnCancelUpdateStok">Batal</button>
+          <button class="btn btn-primary" style="flex: 1; padding: 12px;" id="btnSubmitUpdateStok">Update</button>
         </div>
       </div>
     </div>
 
-    <!-- MODAL DETAIL HISTORI TRANSAKSI -->
+    <!-- MODAL DETAIL PESANAN -->
     <div class="modal-overlay" id="modalDetailHistori">
       <div class="modal" style="max-width: 520px;">
         <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:16px; padding-bottom:12px; border-bottom:1px solid #e2e8f0;">
           <h3 style="font-size:20px; font-weight:800; margin:0;" id="modalHistTitle">Detail Transaksi</h3>
           <span id="modalHistBadge" style="padding:4px 10px; border-radius:999px; font-size:11px; font-weight:800;"></span>
         </div>
-
         <div id="modalHistContent"></div>
-
         <div style="margin-top:20px; text-align:right;">
           <button class="btn" style="border:1px solid #e2e8f0; background:white; padding:10px 20px;" id="btnCloseDetailHist">Tutup</button>
         </div>
       </div>
     </div>
 
-    <!-- MODAL KONFIRMASI LOGOUT -->
+    <!-- MODAL KONFIRMASI PEMBAYARAN (BARU) -->
+    <div class="modal-overlay" id="modalConfirmPayment">
+      <div class="modal" style="max-width: 380px; text-align: center;">
+        <div style="width: 60px; height: 60px; border-radius: 20px; background: rgba(22,128,61,0.1); color: var(--accent); display: flex; align-items: center; justify-content: center; font-size: 26px; margin: 0 auto 16px;">
+          <i class="fas fa-circle-check"></i>
+        </div>
+        <h3 style="font-size: 20px; font-weight: 800; margin-bottom: 8px;">Konfirmasi Pembayaran</h3>
+        <p style="color: var(--muted); font-size: 14px; margin-bottom: 24px;">Apakah pembayaran pesanan ini sudah masuk dan valid?</p>
+        <div style="display: flex; gap: 10px;">
+          <button class="btn" style="flex: 1; border: 1px solid #e2e8f0; background: white; padding: 12px;" id="btnCancelConfirmPayment">Batal</button>
+          <button class="btn btn-primary" style="flex: 1; padding: 12px;" id="btnExecuteConfirmPayment">Ya, Konfirmasi</button>
+        </div>
+      </div>
+    </div>
+
+    <!-- MODAL LOGOUT -->
     <div class="modal-overlay" id="modalConfirmLogout">
       <div class="modal" style="max-width: 380px; text-align: center;">
         <div style="width: 60px; height: 60px; border-radius: 20px; background: rgba(225,29,72,0.1); color: var(--danger); display: flex; align-items: center; justify-content: center; font-size: 26px; margin: 0 auto 16px;">
@@ -553,7 +387,6 @@ const title = 'Kasir LaSayurku';
       </div>
     </div>
 
-    <!-- SCRIPT OTENTIKASI ASTRO -->
     <script>
       import { getAdminSession, roleAllowed } from '../lib/adminAuth';
 
@@ -566,17 +399,16 @@ const title = 'Kasir LaSayurku';
       });
     </script>
 
-    <!-- SCRIPT CLIENT DOM HANDLERS -->
     <script is:inline>
       let products = [];
       let historyOrders = [];
-      let selectedStokProduct = null;
+      let allCodOrders = []; 
       let activeStokFilter = 'all';
       let activeMainCategory = 'all';
       let activeSubCategory = 'semua';
-      let categories = [];
-      let isGridView = true;
+      let activeCodStatus = 'all';
       let isFetchingCod = false;
+      let pendingOrderId = null;
 
       const formatRp = (v) => `Rp ${Math.round(v || 0).toLocaleString('id-ID')}`;
 
@@ -591,150 +423,69 @@ const title = 'Kasir LaSayurku';
         setTimeout(() => t.remove(), 3000);
       }
 
+      // ============= STOK FUNCTIONS =============
       function processAndRenderCategories() {
-        const catMap = new Map();
-
+        const listEl = document.getElementById('subcatList');
+        if (!listEl) return;
+        let subCats = [];
         products.forEach(p => {
           if (Array.isArray(p.categories)) {
             p.categories.forEach(c => {
-              const key = String(c.id || c.name || c);
-              const imgUrl = c.image?.src || c.image || null;
-              if (!catMap.has(key)) {
-                catMap.set(key, {
-                  id: c.id || key,
-                  name: c.name || String(key),
-                  parent: c.parent || 0,
-                  image: imgUrl,
-                  count: 1
-                });
-              } else {
-                const existing = catMap.get(key);
-                existing.count += 1;
-                if (!existing.image && imgUrl) existing.image = imgUrl;
-              }
+              if(!subCats.find(sc => sc.id === c.id)) subCats.push(c);
             });
           }
         });
 
-        categories = Array.from(catMap.values());
-        renderTopCategoryBar();
-        renderSubcatSidebar();
-      }
-
-      // RENDER TOP CATEGORY BAR (DENGAN GAMBAR WOOCOMMERCE)
-      function renderTopCategoryBar() {
-        const topBar = document.getElementById('topCategoryBar');
-        if (!topBar) return;
-
-        const mainCats = categories.filter(c => !c.parent || Number(c.parent) === 0);
-        const fallbackIcons = ['fa-leaf', 'fa-carrot', 'fa-apple-alt', 'fa-pepper-hot', 'fa-lemon', 'fa-bread-slice', 'fa-drumstick-bite'];
-
-        topBar.innerHTML = `
-          <button class="top-cat-item ${activeMainCategory === 'all' ? 'active' : ''}" data-top-cat="all">
-            <div class="top-cat-icon"><i class="fas fa-th-large"></i></div>
-            <span class="top-cat-label">Semua</span>
-          </button>
-          ${mainCats.map((c, i) => {
-            const iconHtml = c.image 
-              ? `<img src="${c.image}" alt="${c.name}" onerror="this.onerror=null; this.parentNode.innerHTML='<i class=\\'fas ${fallbackIcons[i % fallbackIcons.length]}\\'></i>';" />`
-              : `<i class="fas ${fallbackIcons[i % fallbackIcons.length]}"></i>`;
-
-            return `
-              <button class="top-cat-item ${String(activeMainCategory) === String(c.id) ? 'active' : ''}" data-top-cat="${c.id}">
-                <div class="top-cat-icon">${iconHtml}</div>
-                <span class="top-cat-label" title="${c.name}">${c.name}</span>
-              </button>
-            `;
-          }).join('')}
-        `;
-
-        topBar.querySelectorAll('[data-top-cat]').forEach(btn => {
-          btn.addEventListener('click', () => {
-            topBar.querySelectorAll('.top-cat-item').forEach(b => b.classList.remove('active'));
-            btn.classList.add('active');
-            activeMainCategory = btn.dataset.topCat;
-            activeSubCategory = 'semua';
-            renderSubcatSidebar();
-            renderStokDisplay();
-          });
-        });
-      }
-
-      // RENDER SIDEBAR SUB KATEGORI (BERSIH & RAPI)
-      function renderSubcatSidebar() {
-        const titleEl = document.getElementById('subcatTitleMain');
-        const listEl = document.getElementById('subcatList');
-        if (!listEl) return;
-
-        let selectedCatObj = categories.find(c => String(c.id) === String(activeMainCategory));
-        let titleText = selectedCatObj ? selectedCatObj.name : 'Semua Produk';
-        if (titleEl) titleEl.textContent = titleText;
-
-        let subCats = [];
-        if (activeMainCategory === 'all') {
-          subCats = categories;
-        } else {
-          subCats = categories.filter(c => String(c.parent) === String(activeMainCategory) || String(c.id) === String(activeMainCategory));
-        }
-
-        let totalCount = getFilteredProductsCountByCat('semua');
-
         listEl.innerHTML = `
-          <button class="subcat-btn ${activeSubCategory === 'semua' ? 'active' : ''}" data-sub-cat="semua">
-            <span class="subcat-btn-text">Semua</span>
-            <span class="subcat-badge">${totalCount}</span>
+          <button class="subcat-btn ${activeSubCategory === 'semua' ? 'active' : ''}" data-sub-cat="semua" style="display:flex; justify-content:space-between; width:100%; padding:9px 12px; border-radius:12px; font-size:13px; font-weight:600; background:transparent; border:none; cursor:pointer; color:var(--fg);">
+            <span>Semua</span>
           </button>
-          <button class="subcat-btn ${activeSubCategory === 'terlaris' ? 'active' : ''}" data-sub-cat="terlaris">
-            <span class="subcat-btn-text">Terlaris</span>
-            <span class="subcat-badge">${totalCount}</span>
-          </button>
-          ${subCats.map(sc => {
-            const count = sc.count || getFilteredProductsCountByCat(sc.id);
-            return `
-              <button class="subcat-btn ${String(activeSubCategory) === String(sc.id) ? 'active' : ''}" data-sub-cat="${sc.id}">
-                <span class="subcat-btn-text" title="${sc.name}">${sc.name}</span>
-                <span class="subcat-badge">${count}</span>
-              </button>
-            `;
-          }).join('')}
+          ${subCats.map(sc => `
+            <button class="subcat-btn ${String(activeSubCategory) === String(sc.id) ? 'active' : ''}" data-sub-cat="${sc.id}" style="display:flex; justify-content:space-between; width:100%; padding:9px 12px; border-radius:12px; font-size:13px; font-weight:600; background:transparent; border:none; cursor:pointer; color:var(--fg);">
+              <span>${sc.name}</span>
+            </button>
+          `).join('')}
         `;
-
-        listEl.querySelectorAll('[data-sub-cat]').forEach(btn => {
+        
+        listEl.querySelectorAll('.subcat-btn').forEach(btn => {
+          if(btn.classList.contains('active')) {
+            btn.style.background = 'var(--accent)';
+            btn.style.color = '#ffffff';
+          }
           btn.addEventListener('click', () => {
-            listEl.querySelectorAll('.subcat-btn').forEach(b => b.classList.remove('active'));
+            listEl.querySelectorAll('.subcat-btn').forEach(b => {
+              b.classList.remove('active');
+              b.style.background = 'transparent';
+              b.style.color = 'var(--fg)';
+            });
             btn.classList.add('active');
+            btn.style.background = 'var(--accent)';
+            btn.style.color = '#ffffff';
             activeSubCategory = btn.dataset.subCat;
             renderStokDisplay();
           });
         });
       }
 
-      function getFilteredProductsCountByCat(catId) {
-        if (catId === 'semua' || catId === 'terlaris') return products.length;
-        return products.filter(p => {
-          const ids = (p.categories || []).map(c => String(c.id || c.name || c));
-          return ids.includes(String(catId));
-        }).length;
-      }
-
       async function fetchProducts() {
-        const iconRefresh = document.getElementById('iconRefreshStok');
-        if (iconRefresh) iconRefresh.classList.add('fa-spin');
-
         try {
           const res = await fetch('/api/adminrisman/pos/products?per_page=100');
-          if (!res.ok) throw new Error('Network error');
+          if (!res.ok) throw new Error('Gagal memuat data');
           const data = await res.json();
           products = Array.isArray(data) ? data : data.products || data.data || [];
-          
           updateStokStats();
           processAndRenderCategories();
           renderStokDisplay();
+          populateUpdateStokDropdown(); 
         } catch (err) {
           showToast('Gagal memuat produk dari server', 'error');
-        } finally {
-          if (iconRefresh) iconRefresh.classList.remove('fa-spin');
         }
+      }
+
+      function populateUpdateStokDropdown() {
+        const select = document.getElementById('updateStokProductSelect');
+        if (!select) return;
+        select.innerHTML = products.map(p => `<option value="${p.id}">${p.name} (Stok: ${p.stock_quantity || 0})</option>`).join('');
       }
 
       function updateStokStats() {
@@ -756,48 +507,25 @@ const title = 'Kasir LaSayurku';
         const search = (searchInput ? searchInput.value : '').toLowerCase();
         let filtered = products.filter(p => (p.name || '').toLowerCase().includes(search));
 
-        if (activeSubCategory !== 'semua' && activeSubCategory !== 'terlaris') {
+        if (activeSubCategory !== 'semua') {
           filtered = filtered.filter(p => {
             const catIds = (p.categories || []).map(c => String(c.id || c.name || c));
             return catIds.includes(String(activeSubCategory));
           });
-        } else if (activeMainCategory !== 'all') {
-          filtered = filtered.filter(p => {
-            const catIds = (p.categories || []).map(c => String(c.id || c.name || c));
-            return catIds.includes(String(activeMainCategory));
-          });
         }
 
         if (activeStokFilter === 'low') {
-          filtered = filtered.filter(p => {
-            const qty = Number(p.stock_quantity || 0);
-            return qty > 0 && qty <= 5;
-          });
+          filtered = filtered.filter(p => Number(p.stock_quantity || 0) > 0 && Number(p.stock_quantity || 0) <= 5);
         } else if (activeStokFilter === 'out') {
           filtered = filtered.filter(p => Number(p.stock_quantity || 0) <= 0);
         }
-
         return filtered;
       }
 
       function renderStokDisplay() {
-        if (isGridView) {
-          renderStokGrid();
-        } else {
-          renderStokTable();
-        }
-      }
-
-      function renderStokGrid() {
         const gridEl = document.getElementById('stokGridView');
-        const tableEl = document.getElementById('stokTableView');
         if (!gridEl) return;
-
-        gridEl.style.display = 'grid';
-        if (tableEl) tableEl.style.display = 'none';
-
         const filtered = getFilteredProducts();
-
         if (!filtered.length) {
           gridEl.innerHTML = '<div style="grid-column:1/-1; text-align:center; padding:40px; color:var(--muted);">Tidak ada produk yang sesuai filter</div>';
           return;
@@ -807,20 +535,18 @@ const title = 'Kasir LaSayurku';
           const qty = Number(p.stock_quantity || 0);
           const price = Number(p.price || p.regular_price || 0);
           const image = p.images?.[0]?.src || p.image || '/placeholder-product.png';
-
           return `
-            <div class="product-card">
+            <div class="product-card" style="background: #ffffff; border: 1px solid #e2e8f0; border-radius: 18px; padding: 14px; transition: all 0.2s ease; display: flex; flex-direction: column; justify-content: space-between; height: 100%; box-shadow: 0 2px 8px rgba(0,0,0,0.02);">
               <div>
-                <div class="product-card-img-wrapper">
-                  <img class="product-card-image" src="${image}" alt="${p.name}" onerror="this.src='/placeholder-product.png'" />
+                <div style="width: 100%; aspect-ratio: 1 / 1; background: #ffffff; border-radius: 14px; overflow: hidden; display: flex; align-items: center; justify-content: center; margin-bottom: 12px;">
+                  <img src="${image}" alt="${p.name}" style="width: 100%; height: 100%; object-fit: contain; padding: 4px;" onerror="this.src='/placeholder-product.png'" />
                 </div>
-                <div class="product-card-name" title="${p.name}">${p.name}</div>
+                <div style="font-size: 13px; font-weight: 700; color: var(--fg); line-height: 1.35; margin-bottom: 4px;">${p.name}</div>
               </div>
-              
               <div>
-                <div class="product-card-price">${formatRp(price)}</div>
-                <div class="product-card-stock">Stok: <strong style="color:${qty <= 0 ? 'var(--danger)' : qty <= 5 ? 'var(--warn)' : 'var(--fg)'};">${qty}</strong></div>
-                <button class="product-card-action-btn" data-edit-stok-id="${p.id}">
+                <div style="font-size: 14px; font-weight: 800; color: var(--fg); margin-bottom: 2px;">${formatRp(price)}</div>
+                <div style="font-size: 12px; font-weight: 600; color: var(--muted); margin-bottom: 10px;">Stok: <strong style="color:${qty <= 0 ? 'var(--danger)' : qty <= 5 ? 'var(--warn)' : 'var(--fg)'};">${qty}</strong></div>
+                <button class="btn product-card-action-btn" data-edit-stok-id="${p.id}" style="width: 100%; padding: 8px; font-size: 12px; font-weight: 700; border: 1px solid #e2e8f0; background: #ffffff; border-radius: 10px; color: var(--fg);">
                   <i class="fas fa-edit"></i> Edit Stok
                 </button>
               </div>
@@ -829,81 +555,33 @@ const title = 'Kasir LaSayurku';
         }).join('');
 
         gridEl.querySelectorAll('[data-edit-stok-id]').forEach(btn => {
-          btn.addEventListener('click', () => {
-            openEditStokModal(btn.getAttribute('data-edit-stok-id'));
-          });
+          btn.addEventListener('click', () => openUpdateStokModal(btn.getAttribute('data-edit-stok-id')));
         });
       }
 
-      function renderStokTable() {
-        const tableEl = document.getElementById('stokTableView');
-        const gridEl = document.getElementById('stokGridView');
-        const tbody = document.getElementById('stokTableBody');
-        
-        if (!tbody) return;
-
-        gridEl.style.display = 'none';
-        tableEl.style.display = 'block';
-
-        const filtered = getFilteredProducts();
-
-        if (!filtered.length) {
-          tbody.innerHTML = '<tr><td colspan="6" style="text-align:center; padding:40px; color:var(--muted);">Tidak ada produk yang sesuai filter</td></tr>';
-          return;
-        }
-
-        tbody.innerHTML = filtered.map(p => {
-          const qty = Number(p.stock_quantity || 0);
-          const price = Number(p.price || p.regular_price || 0);
-          const cats = Array.isArray(p.categories) ? p.categories.map(c => c.name || c).join(', ') : '-';
-          
-          let badgeStatus = '<span style="padding:4px 10px; border-radius:999px; background:rgba(22,128,61,0.1); color:var(--accent); font-size:11px; font-weight:800;">Tersedia</span>';
-          if (qty <= 0) {
-            badgeStatus = '<span style="padding:4px 10px; border-radius:999px; background:rgba(225,29,72,0.1); color:var(--danger); font-size:11px; font-weight:800;">Habis</span>';
-          } else if (qty <= 5) {
-            badgeStatus = '<span style="padding:4px 10px; border-radius:999px; background:rgba(217,119,6,0.1); color:var(--warn); font-size:11px; font-weight:800;">Rendah</span>';
-          }
-
-          return `
-            <tr style="border-bottom:1px solid rgba(15,23,42,0.05);">
-              <td style="padding:14px 18px; font-weight:700; color:var(--fg);">${p.name}</td>
-              <td style="padding:14px 18px; font-weight:600; color:var(--muted); font-size:12px;">${cats}</td>
-              <td style="padding:14px 18px; font-weight:600; color:var(--muted);">${formatRp(price)}</td>
-              <td style="padding:14px 18px; text-align:center; font-weight:800; font-size:15px;">${qty}</td>
-              <td style="padding:14px 18px; text-align:center;">${badgeStatus}</td>
-              <td style="padding:14px 18px; text-align:center;">
-                <button class="btn" style="padding:6px 12px; font-size:12px; border:1px solid #e2e8f0; background:white;" data-edit-stok-id="${p.id}">
-                  <i class="fas fa-edit"></i>
-                </button>
-              </td>
-            </tr>
-          `;
-        }).join('');
-
-        tbody.querySelectorAll('[data-edit-stok-id]').forEach(btn => {
-          btn.addEventListener('click', () => {
-            openEditStokModal(btn.getAttribute('data-edit-stok-id'));
-          });
-        });
+      function openUpdateStokModal(productId = null) {
+        const select = document.getElementById('updateStokProductSelect');
+        if (productId && select) select.value = String(productId);
+        document.getElementById('updateStokQty').value = 0;
+        document.getElementById('updateStokNote').value = '';
+        document.getElementById('modalUpdateStok').classList.add('show');
       }
 
-      function openEditStokModal(productId) {
-        selectedStokProduct = products.find(p => String(p.id) === String(productId));
-        if (!selectedStokProduct) return;
-        document.getElementById('modalStokProductName').textContent = selectedStokProduct.name;
-        document.getElementById('modalStokQtyInput').value = selectedStokProduct.stock_quantity || 0;
-        document.getElementById('modalEditStok').classList.add('show');
-      }
+      async function submitUpdateStok() {
+        const select = document.getElementById('updateStokProductSelect');
+        const productId = select.value;
+        const product = products.find(p => String(p.id) === String(productId));
+        if (!product) { showToast('Silakan pilih produk', 'error'); return; }
 
-      async function saveStokUpdate() {
-        if (!selectedStokProduct) return;
-        const newQty = Number(document.getElementById('modalStokQtyInput').value);
-        if (isNaN(newQty) || newQty < 0) {
-          showToast('Jumlah stok tidak valid', 'error');
-          return;
-        }
+        const type = document.getElementById('updateStokType').value;
+        const qty = Number(document.getElementById('updateStokQty').value);
+        if (isNaN(qty) || qty <= 0) { showToast('Jumlah stok tidak valid', 'error'); return; }
 
-        const btn = document.getElementById('btnSaveEditStok');
+        const currentStock = Number(product.stock_quantity || 0);
+        let newQty = type === 'in' ? currentStock + qty : currentStock - qty;
+        if (newQty < 0) newQty = 0;
+
+        const btn = document.getElementById('btnSubmitUpdateStok');
         btn.disabled = true;
         btn.textContent = 'Menyimpan...';
 
@@ -911,109 +589,235 @@ const title = 'Kasir LaSayurku';
           const res = await fetch('/api/adminrisman/pos/products', {
             method: 'PUT',
             headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ id: selectedStokProduct.id, stock_quantity: newQty }),
+            body: JSON.stringify({ id: product.id, stock_quantity: newQty }),
           });
-          const data = await res.json();
-          if (!res.ok) throw new Error(data.message || 'Gagal mengubah stok di server');
-
-          selectedStokProduct.stock_quantity = newQty;
+          if (!res.ok) throw new Error('Gagal mengubah stok');
+          
+          product.stock_quantity = newQty;
           updateStokStats();
           renderStokDisplay();
-          document.getElementById('modalEditStok').classList.remove('show');
-          showToast(`Stok ${selectedStokProduct.name} diperbarui menjadi ${newQty}`);
+          populateUpdateStokDropdown(); 
+          document.getElementById('modalUpdateStok').classList.remove('show');
+          showToast(`Stok ${product.name} diperbarui menjadi ${newQty}`);
         } catch (err) {
           showToast(err.message || 'Gagal mengubah stok', 'error');
         } finally {
           btn.disabled = false;
-          btn.textContent = 'Simpan';
-          selectedStokProduct = null;
+          btn.textContent = 'Update';
         }
       }
 
+      // ============= COD ORDERS FUNCTIONS =============
       async function fetchWebOrders() {
         if (isFetchingCod) return;
         isFetchingCod = true;
-
         const iconRefresh = document.getElementById('iconRefreshCod');
         if (iconRefresh) iconRefresh.classList.add('fa-spin');
 
-        const grid = document.getElementById('codOrdersGrid');
-        const empty = document.getElementById('codOrdersEmpty');
-        if (!grid) return;
+        const listEl = document.getElementById('codOrdersList');
+        if(listEl) listEl.innerHTML = '<div style="text-align:center; padding:40px; color:var(--muted);">Memuat data pesanan...</div>';
 
         try {
-          const res = await fetch('/api/adminrisman/orders?status=pending,on-hold');
+          const res = await fetch('/api/adminrisman/orders?status=all');
+          if (!res.ok) throw new Error('Gagal memuat data');
           const data = await res.json();
-          const orders = data.orders || (Array.isArray(data) ? data : []);
+          allCodOrders = data.orders || (Array.isArray(data) ? data : []);
 
-          if (!orders || orders.length === 0) {
-            grid.innerHTML = '';
-            if (empty) empty.style.display = 'block';
-            return;
-          }
-
-          if (empty) empty.style.display = 'none';
-          grid.innerHTML = orders.map((order) => {
-            const orderDate = order.date_created ? new Date(order.date_created).toLocaleString('id-ID', { day: 'numeric', month: 'short', year: 'numeric', hour: '2-digit', minute: '2-digit' }) : '-';
-            const phone = order.phone || order.billing?.phone || order.shipping?.phone || '-';
-            const note = order.customer_note || order.note || '';
-            const items = (order.line_items || []).map((item) => `<li style="margin-bottom:4px;">• <strong>${item.name}</strong> <span style="color:var(--muted)">x${item.quantity}</span></li>`).join('');
-
-            return `
-              <div style="background: #ffffff; border: 1.5px solid #e2e8f0; border-radius: 20px; padding: 22px; display: flex; flex-direction: column; justify-content: space-between;">
-                <div>
-                  <div style="display:flex; justify-content:space-between; align-items:flex-start; margin-bottom: 6px;">
-                    <div>
-                      <span style="font-size:12px; font-weight:700; color:var(--muted); display:block;">${order.number || `ORD-${order.id}`}</span>
-                      <h3 style="font-weight:800; font-size:19px; color:var(--fg); margin-top:2px;">${order.customer_name || order.billing?.first_name || 'Pelanggan'}</h3>
-                    </div>
-                    <span style="padding:4px 12px; border-radius:999px; background:#fef3c7; color:#d97706; font-size:11px; font-weight:800; letter-spacing:0.05em; text-transform:uppercase;">${order.status || 'PENDING'}</span>
-                  </div>
-
-                  <div style="font-size:13px; color:var(--muted); margin-bottom: 12px;">${orderDate}</div>
-
-                  <div style="display:flex; gap:8px; margin-bottom:14px; flex-wrap:wrap;">
-                    <span style="padding:4px 10px; border-radius:8px; background:#dcfce7; color:#166534; font-size:12px; font-weight:700;">${order.payment_method_title || 'QRIS / COD'}</span>
-                  </div>
-
-                  <div style="font-size:13px; color:var(--muted); margin-bottom:8px;">Telepon: ${phone}</div>
-
-                  <ul style="margin:4px 0 16px 12px; padding:0; color:var(--fg); font-size:13px; line-height:1.6; list-style:none;">
-                    ${items || '<li>• Produk tidak tersedia</li>'}
-                  </ul>
-                </div>
-
-                <div>
-                  <div style="border-top: 1px dashed #e2e8f0; margin: 12px 0;"></div>
-
-                  <div style="display:flex; justify-content:space-between; align-items:center;">
-                    <div style="font-weight:800; color:var(--fg); font-size:18px;">Rp ${Number(order.total || 0).toLocaleString('id-ID')}</div>
-                    <button class="btn btn-primary" style="padding:8px 16px; font-size:14px;" data-confirm-order-id="${order.id}">
-                      Konfirmasi
-                    </button>
-                  </div>
-
-                  ${note ? `
-                    <div style="margin-top:14px; background:#fef3c7; border-radius:12px; padding:10px 14px; font-size:13px; color:#92400e;">
-                      <strong>Catatan:</strong> ${note}
-                    </div>
-                  ` : ''}
-                </div>
-              </div>
-            `;
-          }).join('');
+          updateCodStats();
+          renderCodOrders();
         } catch (err) {
           showToast('Gagal memuat pesanan COD', 'error');
+          if(listEl) listEl.innerHTML = '<div style="text-align:center; padding:40px; color:var(--danger);">Gagal memuat data pesanan.</div>';
         } finally {
           isFetchingCod = false;
           if (iconRefresh) iconRefresh.classList.remove('fa-spin');
         }
       }
 
+      function updateCodStats() {
+        const total = allCodOrders.length;
+        const pending = allCodOrders.filter(o => ['pending', 'on-hold'].includes(o.status)).length;
+        const paid = allCodOrders.filter(o => ['processing', 'completed'].includes(o.status)).length;
+
+        document.getElementById('codStatTotal').textContent = total;
+        document.getElementById('codStatPending').textContent = pending;
+        document.getElementById('codStatPaid').textContent = paid;
+      }
+
+      function renderCodOrders() {
+        const listEl = document.getElementById('codOrdersList');
+        const searchInput = document.getElementById('searchCod');
+        const search = (searchInput ? searchInput.value : '').toLowerCase();
+
+        let filtered = allCodOrders;
+        if (activeCodStatus !== 'all') {
+          const statusArr = activeCodStatus.split(',');
+          filtered = filtered.filter(o => statusArr.includes(o.status));
+        }
+
+        filtered = filtered.filter(o => {
+          const num = (o.number || `ORD-${o.id}`).toLowerCase();
+          const name = (o.customer_name || 'Pelanggan').toLowerCase();
+          return num.includes(search) || name.includes(search);
+        });
+
+        if (!filtered.length) {
+          listEl.innerHTML = '<div style="text-align:center; padding:40px; color:var(--muted);">Tidak ada pesanan yang sesuai filter</div>';
+          return;
+        }
+
+        listEl.innerHTML = filtered.map(order => {
+          const address = order.address || order.shipping?.address_1 || order.billing?.address_1 || 'Alamat tidak tersedia';
+          const total = Number(order.total || 0);
+          
+          let statusClass = 'status-pending';
+          let statusText = 'Menunggu Pembayaran';
+          if (order.status === 'processing') { statusClass = 'status-processing'; statusText = 'Diproses'; }
+          if (order.status === 'completed') { statusClass = 'status-completed'; statusText = 'Selesai'; }
+          if (order.status === 'cancelled') { statusClass = 'status-cancelled'; statusText = 'Dibatalkan'; }
+
+          const isPending = ['pending', 'on-hold'].includes(order.status);
+
+          return `
+            <div class="order-card">
+              <div class="order-info">
+                <div class="order-meta">
+                  <span class="order-id">${order.number || `ORD-${order.id}`}</span>
+                  <span style="font-size:12px; color:var(--muted);">•</span>
+                  <span style="font-size:12px; color:var(--muted);">${order.date_created ? new Date(order.date_created).toLocaleString('id-ID', { day: 'numeric', month: 'short', year: 'numeric', hour: '2-digit', minute: '2-digit' }) : '-'}</span>
+                </div>
+                <div class="order-customer">${order.customer_name || 'Pelanggan'}</div>
+                <div class="order-address">
+                  <i class="fas fa-map-marker-alt"></i>
+                  <span style="overflow:hidden; text-overflow:ellipsis; white-space:nowrap; max-width: 350px; display:inline-block; vertical-align:bottom;">${address}</span>
+                </div>
+              </div>
+              <div class="order-actions">
+                <span class="status-badge ${statusClass}">${statusText}</span>
+                <div style="font-weight: 800; color: var(--fg); font-size: 16px; text-align:right;">${formatRp(total)}</div>
+                <div style="display:flex; gap:8px; justify-content:flex-end;">
+                  <button class="btn" style="padding:8px 12px; font-size:12px; border:1px solid #e2e8f0; background:white; color:var(--fg);" data-view-cod-id="${order.id}">
+                    <i class="fas fa-eye"></i> Detail
+                  </button>
+                  ${isPending ? `
+                    <button class="btn btn-primary" style="padding:8px 12px; font-size:12px;" data-confirm-order-id="${order.id}">
+                      <i class="fas fa-check"></i> Konfirmasi Bayar
+                    </button>
+                  ` : ''}
+                </div>
+              </div>
+            </div>
+          `;
+        }).join('');
+
+        listEl.querySelectorAll('[data-confirm-order-id]').forEach(btn => {
+          btn.addEventListener('click', (e) => {
+            e.preventDefault();
+            openConfirmPaymentModal(btn.getAttribute('data-confirm-order-id'));
+          });
+        });
+
+        listEl.querySelectorAll('[data-view-cod-id]').forEach(btn => {
+          btn.addEventListener('click', () => openCodDetailModal(btn.getAttribute('data-view-cod-id')));
+        });
+      }
+
+      function openConfirmPaymentModal(orderId) {
+        pendingOrderId = orderId;
+        document.getElementById('modalConfirmPayment').classList.add('show');
+      }
+
+      async function executeConfirmPayment() {
+        if (!pendingOrderId) return;
+        
+        const btn = document.getElementById('btnExecuteConfirmPayment');
+        btn.disabled = true;
+        btn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Memproses...';
+
+        try {
+          const res = await fetch('/api/adminrisman/orders', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ orderId: pendingOrderId, status: 'processing' })
+          });
+          
+          if (!res.ok) throw new Error('Gagal konfirmasi');
+          
+          showToast('Pesanan berhasil dikonfirmasi!');
+          
+          // Update status lokal agar langsung berubah tanpa reload
+          const order = allCodOrders.find(o => String(o.id) === String(pendingOrderId));
+          if(order) order.status = 'processing';
+          
+          updateCodStats();
+          renderCodOrders();
+          document.getElementById('modalConfirmPayment').classList.remove('show');
+        } catch (err) {
+          showToast('Gagal mengkonfirmasi pesanan', 'error');
+        } finally {
+          btn.disabled = false;
+          btn.innerHTML = 'Ya, Konfirmasi';
+          pendingOrderId = null;
+        }
+      }
+
+      function openCodDetailModal(orderId) {
+        const order = allCodOrders.find(o => String(o.id) === String(orderId)) || historyOrders.find(o => String(o.id) === String(orderId));
+        if (!order) return;
+
+        const modal = document.getElementById('modalDetailHistori');
+        const titleEl = document.getElementById('modalHistTitle');
+        const badgeEl = document.getElementById('modalHistBadge');
+        const contentEl = document.getElementById('modalHistContent');
+
+        const address = order.address || order.shipping?.address_1 || order.billing?.address_1 || '-';
+        const items = (order.line_items || []).map(item => `
+          <div style="display:flex; justify-content:space-between; align-items:center; padding:8px 0; border-bottom:1px dashed #e2e8f0; font-size:13px;">
+            <div>
+              <div style="font-weight:700; color:var(--fg);">${item.name}</div>
+              <div style="color:var(--muted); font-size:12px;">${formatRp(Number(item.price || item.total || 0))} x ${item.quantity}</div>
+            </div>
+            <div style="font-weight:700; color:var(--fg);">${formatRp(Number(item.total || (item.price * item.quantity) || 0))}</div>
+          </div>
+        `).join('');
+
+        titleEl.textContent = `Order #${order.number || order.id}`;
+        badgeEl.textContent = order.status ? order.status.toUpperCase() : 'PENDING';
+        
+        if(order.status === 'completed') {
+          badgeEl.style.background = 'rgba(22,128,61,0.1)';
+          badgeEl.style.color = 'var(--accent)';
+        } else if (order.status === 'processing') {
+          badgeEl.style.background = 'rgba(37, 99, 235, 0.1)';
+          badgeEl.style.color = '#2563eb';
+        } else {
+          badgeEl.style.background = 'rgba(217, 119, 6, 0.1)';
+          badgeEl.style.color = '#d97706';
+        }
+
+        contentEl.innerHTML = `
+          <div style="margin-bottom:16px;">
+            <div style="display:flex; justify-content:space-between; font-size:13px; margin-bottom:6px;"><span style="color:var(--muted);">Pelanggan:</span><strong style="color:var(--fg);">${order.customer_name || 'Pelanggan'}</strong></div>
+            <div style="display:flex; justify-content:space-between; font-size:13px; margin-bottom:6px;"><span style="color:var(--muted);">Telepon:</span><span style="color:var(--fg);">${order.phone || '-'}</span></div>
+            <div style="display:flex; justify-content:space-between; font-size:13px; margin-bottom:6px;"><span style="color:var(--muted);">Alamat:</span><span style="color:var(--fg); text-align:right; max-width:300px;">${address}</span></div>
+            <div style="display:flex; justify-content:space-between; font-size:13px; margin-bottom:6px;"><span style="color:var(--muted);">Metode Pembayaran:</span><span style="color:var(--fg); font-weight:600;">${order.payment_method_title || 'QRIS / COD'}</span></div>
+          </div>
+          <div style="font-size:12px; font-weight:700; color:var(--muted); text-transform:uppercase; margin-bottom:8px;">Rincian Produk</div>
+          <div style="max-height:220px; overflow-y:auto; margin-bottom:16px;">${items || '<div style="color:var(--muted); font-size:13px;">Tidak ada rincian item.</div>'}</div>
+          <div style="display:flex; justify-content:space-between; align-items:center; padding-top:12px; border-top:1.5px solid #e2e8f0;">
+            <span style="font-weight:700; font-size:14px; color:var(--fg);">Total Transaksi</span>
+            <span style="font-weight:800; font-size:18px; color:var(--accent);">${formatRp(Number(order.total || 0))}</span>
+          </div>
+        `;
+        modal.classList.add('show');
+      }
+
+      // ============= HISTORY FUNCTIONS =============
       async function fetchHistoryOrders() {
         const tbody = document.getElementById('histTableBody');
         try {
           const res = await fetch('/api/adminrisman/orders?status=completed');
+          if (!res.ok) throw new Error('Gagal memuat data');
           const data = await res.json();
           historyOrders = Array.isArray(data) ? data : (data.orders || data.data || []);
 
@@ -1025,63 +829,6 @@ const title = 'Kasir LaSayurku';
         } catch (err) {
           if (tbody) tbody.innerHTML = '<tr><td colspan="6" style="text-align:center; padding:40px; color:var(--danger);">Gagal memuat histori transaksi</td></tr>';
         }
-      }
-
-      function openHistoryDetailModal(orderId) {
-        const order = historyOrders.find(o => String(o.id) === String(orderId));
-        if (!order) return;
-
-        const modal = document.getElementById('modalDetailHistori');
-        const titleEl = document.getElementById('modalHistTitle');
-        const badgeEl = document.getElementById('modalHistBadge');
-        const contentEl = document.getElementById('modalHistContent');
-
-        if (!modal || !contentEl) return;
-
-        const dateStr = order.date_created ? new Date(order.date_created).toLocaleString('id-ID', { dateStyle: 'medium', timeStyle: 'short' }) : '-';
-        const items = (order.line_items || []).map(item => `
-          <div style="display:flex; justify-content:space-between; align-items:center; padding:8px 0; border-bottom:1px dashed #e2e8f0; font-size:13px;">
-            <div>
-              <div style="font-weight:700; color:var(--fg);">${item.name}</div>
-              <div style="color:var(--muted); font-size:12px;">${formatRp(Number(item.price || 0))} x ${item.quantity}</div>
-            </div>
-            <div style="font-weight:700; color:var(--fg);">${formatRp(Number(item.total || (item.price * item.quantity) || 0))}</div>
-          </div>
-        `).join('');
-
-        titleEl.textContent = `Order #${order.number || order.id}`;
-        badgeEl.textContent = 'SELESAI';
-        badgeEl.style.background = 'rgba(22,128,61,0.1)';
-        badgeEl.style.color = 'var(--accent)';
-
-        contentEl.innerHTML = `
-          <div style="margin-bottom:16px;">
-            <div style="display:flex; justify-content:space-between; font-size:13px; margin-bottom:6px;">
-              <span style="color:var(--muted);">Pelanggan:</span>
-              <strong style="color:var(--fg);">${order.customer_name || order.billing?.first_name || 'Pelanggan'}</strong>
-            </div>
-            <div style="display:flex; justify-content:space-between; font-size:13px; margin-bottom:6px;">
-              <span style="color:var(--muted);">Tanggal:</span>
-              <span style="color:var(--fg);">${dateStr}</span>
-            </div>
-            <div style="display:flex; justify-content:space-between; font-size:13px; margin-bottom:6px;">
-              <span style="color:var(--muted);">Metode Pembayaran:</span>
-              <span style="color:var(--fg); font-weight:600;">${order.payment_method_title || 'Tunai / POS'}</span>
-            </div>
-          </div>
-
-          <div style="font-size:12px; font-weight:700; color:var(--muted); text-transform:uppercase; margin-bottom:8px;">Rincian Produk</div>
-          <div style="max-height:220px; overflow-y:auto; margin-bottom:16px;">
-            ${items || '<div style="color:var(--muted); font-size:13px;">Tidak ada rincian item.</div>'}
-          </div>
-
-          <div style="display:flex; justify-content:space-between; align-items:center; padding-top:12px; border-top:1.5px solid #e2e8f0;">
-            <span style="font-weight:700; font-size:14px; color:var(--fg);">Total Transaksi</span>
-            <span style="font-weight:800; font-size:18px; color:var(--accent);">${formatRp(Number(order.total || 0))}</span>
-          </div>
-        `;
-
-        modal.classList.add('show');
       }
 
       function renderHistoryTable() {
@@ -1110,99 +857,48 @@ const title = 'Kasir LaSayurku';
               <td style="padding:14px 18px;"><span style="padding:4px 8px; border-radius:6px; background:rgba(22,128,61,0.1); color:var(--accent); font-size:12px; font-weight:700;">${o.payment_method_title || 'Tunai / POS'}</span></td>
               <td style="padding:14px 18px; text-align:right; font-weight:800; color:var(--accent);">${formatRp(Number(o.total || 0))}</td>
               <td style="padding:14px 18px; text-align:center;">
-                <button class="btn" style="padding:6px 12px; font-size:12px; border:1px solid #e2e8f0; background:white;" data-view-hist-id="${o.id}">
-                  <i class="fas fa-eye"></i> Detail
-                </button>
+                <button class="btn" style="padding:6px 12px; font-size:12px; border:1px solid #e2e8f0; background:white;" data-view-hist-id="${o.id}"><i class="fas fa-eye"></i> Detail</button>
               </td>
             </tr>
           `;
         }).join('');
       }
 
+      // ============= INIT & EVENTS =============
       window.addEventListener('DOMContentLoaded', () => {
-        // NAV SWITCH TAB PAGE
         document.querySelectorAll('.nav-item[data-page]').forEach((item) => {
           item.addEventListener('click', () => {
             const pageTarget = item.dataset.page;
             document.querySelectorAll('.nav-item').forEach((n) => n.classList.remove('active'));
             document.querySelectorAll('.page').forEach((p) => p.classList.remove('active'));
             item.classList.add('active');
-            
             const targetId = pageTarget === 'cod' ? 'pageCod' : `page${pageTarget.charAt(0).toUpperCase() + pageTarget.slice(1)}`;
             const el = document.getElementById(targetId);
             if (el) el.classList.add('active');
-
-            if (pageTarget === 'stok') {
-              fetchProducts();
-            }
+            if (pageTarget === 'stok') fetchProducts();
             if (pageTarget === 'cod') fetchWebOrders();
             if (pageTarget === 'histori') fetchHistoryOrders();
           });
         });
 
-        // COD ORDER DELEGATED CLICK LISTENER
-        const codOrdersGrid = document.getElementById('codOrdersGrid');
-        if (codOrdersGrid) {
-          codOrdersGrid.addEventListener('click', async (e) => {
-            const btn = e.target.closest('[data-confirm-order-id]');
-            if (!btn) return;
-
-            const orderId = btn.getAttribute('data-confirm-order-id');
-            if (!confirm('Apakah pembayaran pesanan ini sudah masuk dan valid?')) return;
-
-            const originalText = btn.textContent;
-            btn.textContent = 'Proses...';
-            btn.disabled = true;
-
-            try {
-              const res = await fetch('/api/adminrisman/orders', {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ orderId, status: 'processing' })
-              });
-
-              if (res.ok) {
-                showToast('Pesanan berhasil dikonfirmasi!');
-                fetchWebOrders();
-              } else {
-                showToast('Gagal mengkonfirmasi pesanan', 'error');
-                btn.textContent = originalText;
-                btn.disabled = false;
-              }
-            } catch (err) {
-              showToast('Terjadi kesalahan jaringan', 'error');
-              btn.textContent = originalText;
-              btn.disabled = false;
-            }
+        document.querySelectorAll('.tab-btn[data-cod-status]').forEach(btn => {
+          btn.addEventListener('click', () => {
+            document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
+            btn.classList.add('active');
+            activeCodStatus = btn.dataset.codStatus;
+            renderCodOrders();
           });
-        }
+        });
 
-        // REFRESH COD ORDER
+        const searchCod = document.getElementById('searchCod');
+        if (searchCod) searchCod.addEventListener('input', renderCodOrders);
+
         const btnRefreshCodOrders = document.getElementById('btnRefreshCodOrders');
-        if (btnRefreshCodOrders) {
-          btnRefreshCodOrders.addEventListener('click', () => {
-            fetchWebOrders();
-          });
-        }
+        if (btnRefreshCodOrders) btnRefreshCodOrders.addEventListener('click', fetchWebOrders);
 
-        // STOK EVENT HANDLERS
         const searchStok = document.getElementById('searchStok');
         if (searchStok) searchStok.addEventListener('input', renderStokDisplay);
         
-        const btnRefreshStok = document.getElementById('btnRefreshStok');
-        if (btnRefreshStok) btnRefreshStok.addEventListener('click', () => {
-          fetchProducts();
-        });
-
-        const btnViewToggle = document.getElementById('btnViewToggle');
-        if (btnViewToggle) {
-          btnViewToggle.addEventListener('click', () => {
-            isGridView = !isGridView;
-            btnViewToggle.innerHTML = isGridView ? '<i class="fas fa-th-large"></i>' : '<i class="fas fa-list"></i>';
-            renderStokDisplay();
-          });
-        }
-
         document.querySelectorAll('.stok-filter-btn').forEach(btn => {
           btn.addEventListener('click', () => {
             document.querySelectorAll('.stok-filter-btn').forEach(b => b.classList.remove('active'));
@@ -1212,18 +908,17 @@ const title = 'Kasir LaSayurku';
           });
         });
 
-        const btnCancelEditStok = document.getElementById('btnCancelEditStok');
-        if (btnCancelEditStok) btnCancelEditStok.addEventListener('click', () => {
-          document.getElementById('modalEditStok').classList.remove('show');
-        });
+        const btnOpenUpdateStokModal = document.getElementById('btnOpenUpdateStokModal');
+        if (btnOpenUpdateStokModal) btnOpenUpdateStokModal.addEventListener('click', () => openUpdateStokModal());
 
-        const btnSaveEditStok = document.getElementById('btnSaveEditStok');
-        if (btnSaveEditStok) btnSaveEditStok.addEventListener('click', saveStokUpdate);
+        const btnCancelUpdateStok = document.getElementById('btnCancelUpdateStok');
+        if (btnCancelUpdateStok) btnCancelUpdateStok.addEventListener('click', () => document.getElementById('modalUpdateStok').classList.remove('show'));
 
-        // HISTORI EVENT HANDLERS
+        const btnSubmitUpdateStok = document.getElementById('btnSubmitUpdateStok');
+        if (btnSubmitUpdateStok) btnSubmitUpdateStok.addEventListener('click', submitUpdateStok);
+
         const searchHistory = document.getElementById('searchHistory');
         if (searchHistory) searchHistory.addEventListener('input', renderHistoryTable);
-        
         const btnRefreshHistory = document.getElementById('btnRefreshHistory');
         if (btnRefreshHistory) btnRefreshHistory.addEventListener('click', fetchHistoryOrders);
 
@@ -1231,33 +926,28 @@ const title = 'Kasir LaSayurku';
         if (histTableBody) {
           histTableBody.addEventListener('click', (e) => {
             const btn = e.target.closest('[data-view-hist-id]');
-            if (!btn) return;
-            openHistoryDetailModal(btn.getAttribute('data-view-hist-id'));
+            if (btn) openCodDetailModal(btn.getAttribute('data-view-hist-id')); 
           });
         }
 
         const btnCloseDetailHist = document.getElementById('btnCloseDetailHist');
-        if (btnCloseDetailHist) {
-          btnCloseDetailHist.addEventListener('click', () => {
-            const modal = document.getElementById('modalDetailHistori');
-            if (modal) modal.classList.remove('show');
-          });
-        }
+        if (btnCloseDetailHist) btnCloseDetailHist.addEventListener('click', () => document.getElementById('modalDetailHistori').classList.remove('show'));
 
-        // LOGOUT MODAL HANDLERS
+        const btnCancelConfirmPayment = document.getElementById('btnCancelConfirmPayment');
+        if(btnCancelConfirmPayment) btnCancelConfirmPayment.addEventListener('click', () => document.getElementById('modalConfirmPayment').classList.remove('show'));
+        
+        const btnExecuteConfirmPayment = document.getElementById('btnExecuteConfirmPayment');
+        if(btnExecuteConfirmPayment) btnExecuteConfirmPayment.addEventListener('click', executeConfirmPayment);
+
         const navLogout = document.getElementById('navLogout');
         if (navLogout) navLogout.addEventListener('click', () => document.getElementById('modalConfirmLogout').classList.add('show'));
-        
         const btnCancelLogout = document.getElementById('btnCancelLogout');
         if (btnCancelLogout) btnCancelLogout.addEventListener('click', () => document.getElementById('modalConfirmLogout').classList.remove('show'));
-        
         const btnExecuteLogout = document.getElementById('btnExecuteLogout');
-        if (btnExecuteLogout) {
-          btnExecuteLogout.addEventListener('click', () => {
-            localStorage.removeItem('admin_session');
-            window.location.replace('/login?from=admin');
-          });
-        }
+        if (btnExecuteLogout) btnExecuteLogout.addEventListener('click', () => {
+          localStorage.removeItem('admin_session');
+          window.location.replace('/login?from=admin');
+        });
       });
     </script>
   </body>

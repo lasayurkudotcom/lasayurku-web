@@ -1,0 +1,10 @@
+{
+  "name": "lasayurku",
+  "compatibility_date": "2024-09-23",
+  "kv_namespaces": [
+    {
+      "binding": "SESSION",
+      "id": "dev-session-id"
+    }
+  ]
+}
