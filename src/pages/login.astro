@@ -196,6 +196,7 @@ import Layout from "../layouts/Layout.astro";
       'user_nicename', 'admin_user_nicename', 'user_email', 'admin_user_email',
       'pos_online_token', 'pos_online_role', 'pos_online_nicename',
       'pos_offline_token', 'pos_offline_role', 'pos_offline_nicename',
+      'kasir_login_time' // Hapus waktu login kasir lama jika ada
     ];
 
     keysToClear.forEach((key) => localStorage.removeItem(key));
@@ -235,7 +236,7 @@ import Layout from "../layouts/Layout.astro";
 
     if (accessDenied && loginError) {
       loginError.textContent =
-        "Akses Ditolak: Anda tidak memiliki izin untuk halaman tersebut.";
+        "Akses Ditolak: Anda tidak memiliki izin untuk halaman tersebut atau sesi telah berakhir.";
       loginError.classList.remove("hidden");
     }
 
@@ -396,6 +397,9 @@ import Layout from "../layouts/Layout.astro";
               user_email: email,
             });
 
+            // CATAT WAKTU LOGIN UNTUK KEDALUWARSAAAN SESI KASIR
+            localStorage.setItem('kasir_login_time', Date.now().toString());
+
             if (data.customer_id)
               localStorage.setItem("user_id", data.customer_id.toString());
             else if (data.user_id)
@@ -512,6 +516,9 @@ import Layout from "../layouts/Layout.astro";
               user_nicename: formData.get("email") as string,
               user_email: formData.get("email") as string,
             });
+
+            // CATAT WAKTU LOGIN UNTUK KEDALUWARSAAAN SESI KASIR
+            localStorage.setItem('kasir_login_time', Date.now().toString());
 
             window.location.href = "/";
           } else {

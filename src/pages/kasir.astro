@@ -97,6 +97,7 @@ const title = 'Kasir LaSayurku';
       .stat-value { font-size: clamp(1.4rem, 2vw, 2rem); font-weight: 800; margin-top: 4px; }
       .muted { color: var(--muted); }
 
+      /* TABS & FILTERS */
       .tab-filter-bar {
         display: flex; gap: 6px; background: #ffffff; border: 1px solid #e2e8f0; border-radius: 999px; padding: 4px; flex-wrap: wrap;
       }
@@ -106,13 +107,14 @@ const title = 'Kasir LaSayurku';
       .tab-btn:hover { color: var(--fg); }
       .tab-btn.active { background: var(--accent); color: white; box-shadow: 0 2px 6px rgba(22,128,61,0.2); }
 
+      /* ORDER CARD LIST */
       .order-list { display: flex; flex-direction: column; gap: 16px; }
       .order-card {
         background: #ffffff; border: 1px solid #e2e8f0; border-radius: 20px; padding: 20px; display: flex; justify-content: space-between; align-items: flex-start; gap: 20px; transition: box-shadow 0.2s ease;
       }
       .order-card:hover { box-shadow: 0 8px 24px rgba(15,23,42,0.06); }
       .order-info { flex: 1; min-width: 0; }
-      .order-meta { display: flex; align-items: center; gap: 8px; margin-bottom: 4px; flex-wrap: wrap; }
+      .order-meta { display: flex; align-items: center; gap: 8px; margin-bottom: 4px; }
       .order-id { font-size: 12px; font-weight: 800; color: var(--muted); letter-spacing: 0.05em; }
       .order-customer { font-size: 16px; font-weight: 800; color: var(--fg); margin-bottom: 6px; }
       .order-address { font-size: 13px; color: var(--muted); display: flex; align-items: center; gap: 6px; }
@@ -205,6 +207,26 @@ const title = 'Kasir LaSayurku';
             </div>
 
             <div id="stokGridView" style="display: grid; grid-template-columns: repeat(auto-fill, minmax(170px, 1fr)); gap: 16px; margin-bottom: 20px;"></div>
+
+            <div id="stokTableView" style="display: none; background: #fff; border: 1px solid #e2e8f0; border-radius: 20px; overflow: hidden;">
+              <div style="overflow-x: auto;">
+                <table style="width: 100%; border-collapse: collapse; text-align: left; font-size: 14px;">
+                  <thead>
+                    <tr style="background: #f8fafc; border-bottom: 1px solid #e2e8f0; color: var(--muted); font-size: 12px; text-transform: uppercase;">
+                      <th style="padding: 14px 18px;">Produk</th>
+                      <th style="padding: 14px 18px;">Kategori</th>
+                      <th style="padding: 14px 18px;">Harga</th>
+                      <th style="padding: 14px 18px; text-align: center;">Jumlah Stok</th>
+                      <th style="padding: 14px 18px; text-align: center;">Status</th>
+                      <th style="padding: 14px 18px; text-align: center;">Aksi</th>
+                    </tr>
+                  </thead>
+                  <tbody id="stokTableBody">
+                    <tr><td colspan="6" style="text-align: center; padding: 40px; color: var(--muted);">Memuat inventaris produk...</td></tr>
+                  </tbody>
+                </table>
+              </div>
+            </div>
           </div>
         </div>
       </section>
@@ -213,7 +235,7 @@ const title = 'Kasir LaSayurku';
         <div class="page-header">
           <div>
             <h1>Histori Penjualan</h1>
-            <p class="muted" style="margin-top:6px;">Catatan transaksi sukses dari kasir POS dan WooCommerce.</p>
+            <p class="muted" style="margin-top:6px;">Riwayat seluruh transaksi.</p>
           </div>
           <button id="btnRefreshHistory" class="btn btn-primary" style="padding:10px 16px;">
             <i class="fas fa-sync-alt" style="margin-right:6px;"></i> Refresh
@@ -222,22 +244,39 @@ const title = 'Kasir LaSayurku';
 
         <div class="stats-grid">
           <div class="stat-card">
-            <div class="stat-label">Total Transaksi Selesai</div>
+            <div class="stat-label">Total Transaksi</div>
             <div class="stat-value" id="histStatTotal">0</div>
           </div>
           <div class="stat-card">
-            <div class="stat-label">Total Pendapatan</div>
-            <div class="stat-value" id="histStatOmset" style="color:var(--accent);">Rp 0</div>
+            <div class="stat-label">Total Item Terjual</div>
+            <div class="stat-value" id="histStatItems">0</div>
+          </div>
+          <div class="stat-card">
+            <div class="stat-label">Rata - rata per Transaksi</div>
+            <div class="stat-value" id="histStatRata" style="color:var(--accent);">Rp 0</div>
           </div>
         </div>
 
         <div class="card" style="padding:0; overflow:hidden; background:#fff; border:1px solid #e2e8f0; border-radius:20px;">
-          <div style="padding:16px; border-bottom:1px solid #e2e8f0; display:flex; gap:12px;">
-            <div style="position:relative; flex:1;">
+          <div style="padding:16px; border-bottom:1px solid #e2e8f0; display:flex; gap:12px; flex-wrap:wrap;">
+            <div style="position:relative; flex:1; min-width: 200px;">
               <i class="fas fa-search" style="position:absolute; left:14px; top:50%; transform:translateY(-50%); color:var(--muted);"></i>
-              <input type="text" class="input" id="searchHistory" placeholder="Cari No. Order atau Pelanggan..." style="padding-left:40px;" />
+              <input type="text" class="input" id="searchHistory" placeholder="Cari no. transaksi atau nama produk..." style="padding-left:40px;" />
+            </div>
+            
+            <div style="display:flex; align-items:center; gap:8px; flex-wrap:wrap;">
+              <div style="position:relative;">
+                <i class="fas fa-calendar" style="position:absolute; left:14px; top:50%; transform:translateY(-50%); color:var(--muted); pointer-events:none;"></i>
+                <input type="date" class="input" id="dateFromHist" style="padding-left:40px; padding-right:10px; width:170px;" />
+              </div>
+              <span class="muted" style="font-weight:700;">-</span>
+              <div style="position:relative;">
+                <i class="fas fa-calendar" style="position:absolute; left:14px; top:50%; transform:translateY(-50%); color:var(--muted); pointer-events:none;"></i>
+                <input type="date" class="input" id="dateToHist" style="padding-left:40px; padding-right:10px; width:170px;" />
+              </div>
             </div>
           </div>
+          
           <div style="overflow-x:auto;">
             <table style="width:100%; border-collapse:collapse; text-align:left; font-size:14px;">
               <thead>
@@ -258,6 +297,7 @@ const title = 'Kasir LaSayurku';
         </div>
       </section>
 
+      <!-- PAGE COD BARU -->
       <section class="page" id="pageCod">
         <div class="page-header">
           <div>
@@ -269,6 +309,7 @@ const title = 'Kasir LaSayurku';
           </button>
         </div>
 
+        <!-- STATS UNTUK COD -->
         <div class="stats-grid">
           <div class="stat-card">
             <div class="stat-label">Total Orderan</div>
@@ -284,6 +325,7 @@ const title = 'Kasir LaSayurku';
           </div>
         </div>
 
+        <!-- TOOLBAR FILTER & SEARCH -->
         <div style="display: flex; gap: 12px; margin-bottom: 20px; align-items: center; flex-wrap: wrap;">
           <div style="position: relative; flex: 1; min-width: 240px;">
             <i class="fas fa-search" style="position: absolute; left: 16px; top: 50%; transform: translateY(-50%); color: var(--muted);"></i>
@@ -297,6 +339,7 @@ const title = 'Kasir LaSayurku';
           </div>
         </div>
 
+        <!-- LIST ORDER -->
         <div class="order-list" id="codOrdersList">
           <div style="text-align:center; padding:40px; color:var(--muted);">Memuat data pesanan...</div>
         </div>
@@ -343,7 +386,7 @@ const title = 'Kasir LaSayurku';
       </div>
     </div>
 
-    <!-- MODAL DETAIL PESANAN -->
+    <!-- MODAL DETAIL PESANAN / TRANSAKSI -->
     <div class="modal-overlay" id="modalDetailHistori">
       <div class="modal" style="max-width: 520px;">
         <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:16px; padding-bottom:12px; border-bottom:1px solid #e2e8f0;">
@@ -357,22 +400,6 @@ const title = 'Kasir LaSayurku';
       </div>
     </div>
 
-    <!-- MODAL KONFIRMASI PEMBAYARAN (BARU) -->
-    <div class="modal-overlay" id="modalConfirmPayment">
-      <div class="modal" style="max-width: 380px; text-align: center;">
-        <div style="width: 60px; height: 60px; border-radius: 20px; background: rgba(22,128,61,0.1); color: var(--accent); display: flex; align-items: center; justify-content: center; font-size: 26px; margin: 0 auto 16px;">
-          <i class="fas fa-circle-check"></i>
-        </div>
-        <h3 style="font-size: 20px; font-weight: 800; margin-bottom: 8px;">Konfirmasi Pembayaran</h3>
-        <p style="color: var(--muted); font-size: 14px; margin-bottom: 24px;">Apakah pembayaran pesanan ini sudah masuk dan valid?</p>
-        <div style="display: flex; gap: 10px;">
-          <button class="btn" style="flex: 1; border: 1px solid #e2e8f0; background: white; padding: 12px;" id="btnCancelConfirmPayment">Batal</button>
-          <button class="btn btn-primary" style="flex: 1; padding: 12px;" id="btnExecuteConfirmPayment">Ya, Konfirmasi</button>
-        </div>
-      </div>
-    </div>
-
-    <!-- MODAL LOGOUT -->
     <div class="modal-overlay" id="modalConfirmLogout">
       <div class="modal" style="max-width: 380px; text-align: center;">
         <div style="width: 60px; height: 60px; border-radius: 20px; background: rgba(225,29,72,0.1); color: var(--danger); display: flex; align-items: center; justify-content: center; font-size: 26px; margin: 0 auto 16px;">
@@ -393,7 +420,27 @@ const title = 'Kasir LaSayurku';
       document.addEventListener('DOMContentLoaded', () => {
         const session = getAdminSession('online') || getAdminSession();
         const allowed = ['kasir', 'kasir_lasayurku', 'administrator', 'admin'];
-        if (!session || !roleAllowed(session.role, allowed)) {
+        
+        const SESSION_DURATION = 12 * 60 * 60 * 1000; // 12 Jam
+        const loginTimeStr = localStorage.getItem('kasir_login_time');
+        
+        let isSessionValid = false;
+
+        if (session && roleAllowed(session.role, allowed)) {
+          if (loginTimeStr) {
+            const loginTime = parseInt(loginTimeStr, 10);
+            if (Date.now() - loginTime < SESSION_DURATION) {
+              isSessionValid = true;
+            } else {
+              localStorage.removeItem('admin_session');
+              localStorage.removeItem('kasir_login_time');
+            }
+          } else {
+            localStorage.removeItem('admin_session');
+          }
+        }
+
+        if (!isSessionValid) {
           window.location.replace('/login?from=admin&error=denied');
         }
       });
@@ -408,7 +455,6 @@ const title = 'Kasir LaSayurku';
       let activeSubCategory = 'semua';
       let activeCodStatus = 'all';
       let isFetchingCod = false;
-      let pendingOrderId = null;
 
       const formatRp = (v) => `Rp ${Math.round(v || 0).toLocaleString('id-ID')}`;
 
@@ -425,6 +471,26 @@ const title = 'Kasir LaSayurku';
 
       // ============= STOK FUNCTIONS =============
       function processAndRenderCategories() {
+        const catMap = new Map();
+        products.forEach(p => {
+          if (Array.isArray(p.categories)) {
+            p.categories.forEach(c => {
+              const key = String(c.id || c.name || c);
+              const imgUrl = c.image?.src || c.image || null;
+              if (!catMap.has(key)) {
+                catMap.set(key, { id: c.id || key, name: c.name || String(key), parent: c.parent || 0, image: imgUrl, count: 1 });
+              } else {
+                const existing = catMap.get(key);
+                existing.count += 1;
+                if (!existing.image && imgUrl) existing.image = imgUrl;
+              }
+            });
+          }
+        });
+        renderSubcatSidebar();
+      }
+
+      function renderSubcatSidebar() {
         const listEl = document.getElementById('subcatList');
         if (!listEl) return;
         let subCats = [];
@@ -524,7 +590,11 @@ const title = 'Kasir LaSayurku';
 
       function renderStokDisplay() {
         const gridEl = document.getElementById('stokGridView');
+        const tableEl = document.getElementById('stokTableView');
         if (!gridEl) return;
+        gridEl.style.display = 'grid';
+        if (tableEl) tableEl.style.display = 'none';
+
         const filtered = getFilteredProducts();
         if (!filtered.length) {
           gridEl.innerHTML = '<div style="grid-column:1/-1; text-align:center; padding:40px; color:var(--muted);">Tidak ada produk yang sesuai filter</div>';
@@ -667,7 +737,7 @@ const title = 'Kasir LaSayurku';
         }
 
         listEl.innerHTML = filtered.map(order => {
-          const address = order.address || order.shipping?.address_1 || order.billing?.address_1 || 'Alamat tidak tersedia';
+          const address = order.shipping?.address_1 || order.billing?.address_1 || order.address || 'Alamat tidak tersedia';
           const total = Number(order.total || 0);
           
           let statusClass = 'status-pending';
@@ -711,10 +781,7 @@ const title = 'Kasir LaSayurku';
         }).join('');
 
         listEl.querySelectorAll('[data-confirm-order-id]').forEach(btn => {
-          btn.addEventListener('click', (e) => {
-            e.preventDefault();
-            openConfirmPaymentModal(btn.getAttribute('data-confirm-order-id'));
-          });
+          btn.addEventListener('click', () => handleConfirmOrder(btn.getAttribute('data-confirm-order-id'), btn));
         });
 
         listEl.querySelectorAll('[data-view-cod-id]').forEach(btn => {
@@ -722,47 +789,34 @@ const title = 'Kasir LaSayurku';
         });
       }
 
-      function openConfirmPaymentModal(orderId) {
-        pendingOrderId = orderId;
-        document.getElementById('modalConfirmPayment').classList.add('show');
-      }
-
-      async function executeConfirmPayment() {
-        if (!pendingOrderId) return;
-        
-        const btn = document.getElementById('btnExecuteConfirmPayment');
+      async function handleConfirmOrder(orderId, btn) {
+        if (!confirm('Apakah pembayaran pesanan ini sudah masuk dan valid?')) return;
+        const originalText = btn.innerHTML;
+        btn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Proses...';
         btn.disabled = true;
-        btn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Memproses...';
 
         try {
           const res = await fetch('/api/adminrisman/orders', {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ orderId: pendingOrderId, status: 'processing' })
+            body: JSON.stringify({ orderId, status: 'processing' })
           });
-          
           if (!res.ok) throw new Error('Gagal konfirmasi');
           
           showToast('Pesanan berhasil dikonfirmasi!');
-          
-          // Update status lokal agar langsung berubah tanpa reload
-          const order = allCodOrders.find(o => String(o.id) === String(pendingOrderId));
+          const order = allCodOrders.find(o => String(o.id) === String(orderId));
           if(order) order.status = 'processing';
-          
           updateCodStats();
           renderCodOrders();
-          document.getElementById('modalConfirmPayment').classList.remove('show');
         } catch (err) {
           showToast('Gagal mengkonfirmasi pesanan', 'error');
-        } finally {
+          btn.innerHTML = originalText;
           btn.disabled = false;
-          btn.innerHTML = 'Ya, Konfirmasi';
-          pendingOrderId = null;
         }
       }
 
       function openCodDetailModal(orderId) {
-        const order = allCodOrders.find(o => String(o.id) === String(orderId)) || historyOrders.find(o => String(o.id) === String(orderId));
+        const order = allCodOrders.find(o => String(o.id) === String(orderId));
         if (!order) return;
 
         const modal = document.getElementById('modalDetailHistori');
@@ -770,12 +824,12 @@ const title = 'Kasir LaSayurku';
         const badgeEl = document.getElementById('modalHistBadge');
         const contentEl = document.getElementById('modalHistContent');
 
-        const address = order.address || order.shipping?.address_1 || order.billing?.address_1 || '-';
+        const address = order.shipping?.address_1 || order.billing?.address_1 || order.address || '-';
         const items = (order.line_items || []).map(item => `
           <div style="display:flex; justify-content:space-between; align-items:center; padding:8px 0; border-bottom:1px dashed #e2e8f0; font-size:13px;">
             <div>
               <div style="font-weight:700; color:var(--fg);">${item.name}</div>
-              <div style="color:var(--muted); font-size:12px;">${formatRp(Number(item.price || item.total || 0))} x ${item.quantity}</div>
+              <div style="color:var(--muted); font-size:12px;">${formatRp(Number(item.price || 0))} x ${item.quantity}</div>
             </div>
             <div style="font-weight:700; color:var(--fg);">${formatRp(Number(item.total || (item.price * item.quantity) || 0))}</div>
           </div>
@@ -783,17 +837,8 @@ const title = 'Kasir LaSayurku';
 
         titleEl.textContent = `Order #${order.number || order.id}`;
         badgeEl.textContent = order.status ? order.status.toUpperCase() : 'PENDING';
-        
-        if(order.status === 'completed') {
-          badgeEl.style.background = 'rgba(22,128,61,0.1)';
-          badgeEl.style.color = 'var(--accent)';
-        } else if (order.status === 'processing') {
-          badgeEl.style.background = 'rgba(37, 99, 235, 0.1)';
-          badgeEl.style.color = '#2563eb';
-        } else {
-          badgeEl.style.background = 'rgba(217, 119, 6, 0.1)';
-          badgeEl.style.color = '#d97706';
-        }
+        badgeEl.style.background = 'rgba(22,128,61,0.1)';
+        badgeEl.style.color = 'var(--accent)';
 
         contentEl.innerHTML = `
           <div style="margin-bottom:16px;">
@@ -820,11 +865,6 @@ const title = 'Kasir LaSayurku';
           if (!res.ok) throw new Error('Gagal memuat data');
           const data = await res.json();
           historyOrders = Array.isArray(data) ? data : (data.orders || data.data || []);
-
-          document.getElementById('histStatTotal').textContent = String(historyOrders.length || 0);
-          let totalOmset = 0;
-          historyOrders.forEach(o => totalOmset += Number(o.total || 0));
-          document.getElementById('histStatOmset').textContent = formatRp(totalOmset);
           renderHistoryTable();
         } catch (err) {
           if (tbody) tbody.innerHTML = '<tr><td colspan="6" style="text-align:center; padding:40px; color:var(--danger);">Gagal memuat histori transaksi</td></tr>';
@@ -834,13 +874,49 @@ const title = 'Kasir LaSayurku';
       function renderHistoryTable() {
         const tbody = document.getElementById('histTableBody');
         if (!tbody) return;
+        
         const searchInput = document.getElementById('searchHistory');
         const search = (searchInput ? searchInput.value : '').toLowerCase();
+        
+        const dateFromVal = document.getElementById('dateFromHist')?.value;
+        const dateToVal = document.getElementById('dateToHist')?.value;
+        
+        let fromTime = 0;
+        let toTime = Infinity;
+        
+        if (dateFromVal) {
+          fromTime = new Date(dateFromVal).getTime();
+        }
+        if (dateToVal) {
+          const d = new Date(dateToVal);
+          d.setHours(23, 59, 59, 999);
+          toTime = d.getTime();
+        }
+
         const filtered = historyOrders.filter(o => {
           const num = (o.number || `ORD-${o.id}`).toLowerCase();
           const name = (o.customer_name || 'Pelanggan').toLowerCase();
-          return num.includes(search) || name.includes(search);
+          const matchSearch = num.includes(search) || name.includes(search);
+          
+          const orderTime = o.date_created ? new Date(o.date_created).getTime() : 0;
+          const matchDate = orderTime >= fromTime && orderTime <= toTime;
+          
+          return matchSearch && matchDate;
         });
+
+        let totalOmset = 0;
+        let totalItems = 0;
+        filtered.forEach(o => {
+          totalOmset += Number(o.total || 0);
+          if (o.line_items) {
+            o.line_items.forEach(i => totalItems += Number(i.quantity || 0));
+          }
+        });
+
+        document.getElementById('histStatTotal').textContent = String(filtered.length || 0);
+        document.getElementById('histStatItems').textContent = String(totalItems);
+        const rata = filtered.length > 0 ? (totalOmset / filtered.length) : 0;
+        document.getElementById('histStatRata').textContent = formatRp(rata);
 
         if (!filtered.length) {
           tbody.innerHTML = '<tr><td colspan="6" style="text-align:center; padding:40px; color:var(--muted);">Tidak ada riwayat transaksi ditemukan</td></tr>';
@@ -919,6 +995,13 @@ const title = 'Kasir LaSayurku';
 
         const searchHistory = document.getElementById('searchHistory');
         if (searchHistory) searchHistory.addEventListener('input', renderHistoryTable);
+        
+        const dateFromHist = document.getElementById('dateFromHist');
+        if (dateFromHist) dateFromHist.addEventListener('change', renderHistoryTable);
+        
+        const dateToHist = document.getElementById('dateToHist');
+        if (dateToHist) dateToHist.addEventListener('change', renderHistoryTable);
+
         const btnRefreshHistory = document.getElementById('btnRefreshHistory');
         if (btnRefreshHistory) btnRefreshHistory.addEventListener('click', fetchHistoryOrders);
 
@@ -926,18 +1009,12 @@ const title = 'Kasir LaSayurku';
         if (histTableBody) {
           histTableBody.addEventListener('click', (e) => {
             const btn = e.target.closest('[data-view-hist-id]');
-            if (btn) openCodDetailModal(btn.getAttribute('data-view-hist-id')); 
+            if (btn) openHistoryDetailModal(btn.getAttribute('data-view-hist-id'));
           });
         }
 
         const btnCloseDetailHist = document.getElementById('btnCloseDetailHist');
         if (btnCloseDetailHist) btnCloseDetailHist.addEventListener('click', () => document.getElementById('modalDetailHistori').classList.remove('show'));
-
-        const btnCancelConfirmPayment = document.getElementById('btnCancelConfirmPayment');
-        if(btnCancelConfirmPayment) btnCancelConfirmPayment.addEventListener('click', () => document.getElementById('modalConfirmPayment').classList.remove('show'));
-        
-        const btnExecuteConfirmPayment = document.getElementById('btnExecuteConfirmPayment');
-        if(btnExecuteConfirmPayment) btnExecuteConfirmPayment.addEventListener('click', executeConfirmPayment);
 
         const navLogout = document.getElementById('navLogout');
         if (navLogout) navLogout.addEventListener('click', () => document.getElementById('modalConfirmLogout').classList.add('show'));
@@ -946,9 +1023,17 @@ const title = 'Kasir LaSayurku';
         const btnExecuteLogout = document.getElementById('btnExecuteLogout');
         if (btnExecuteLogout) btnExecuteLogout.addEventListener('click', () => {
           localStorage.removeItem('admin_session');
+          localStorage.removeItem('kasir_login_time');
           window.location.replace('/login?from=admin');
         });
       });
+
+      function openHistoryDetailModal(orderId) {
+        // Reuse COD modal logic for history
+        const order = historyOrders.find(o => String(o.id) === String(orderId));
+        if (!order) return;
+        openCodDetailModal(orderId);
+      }
     </script>
   </body>
 </html>
