@@ -1,9 +1,13 @@
 import { defineConfig } from 'astro/config';
+import cloudflare from '@astrojs/cloudflare';
 import tailwind from '@astrojs/tailwind';
 import react from '@astrojs/react';
 
 export default defineConfig({
-  output: 'static', // Ubah ke static
+  output: 'server',
+  adapter: cloudflare({
+    imageService: 'compile',
+  }),
   integrations: [tailwind(), react()],
   vite: {
     resolve: {
