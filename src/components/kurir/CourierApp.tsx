@@ -11,26 +11,41 @@ interface Order {
   customer_name: string;
   phone: string;
   shipping_address: string;
+  payment_method: string; 
   payment_method_title: string;
   customer_note: string;
   total: string;
   line_items: any[];
+  meta_data?: any[]; 
   packing_status: string;
   _courier_assigned: string;
   _proof_image_url: string;
   _delivered_at: string;
 }
 
+// BANTUAN: Deteksi apakah order berasal dari Kasir Offline
+const isOfflinePosOrder = (order: Order) => {
+  if (order.payment_method === 'pos_cash' || order.payment_method === 'pos_qris' || order.payment_method === 'pos_offline') return true;
+  if (order.payment_method_title) {
+    const title = order.payment_method_title.toLowerCase();
+    if (title.includes('toko') || title.includes('kasir') || title.includes('pos')) return true;
+  }
+  if (order.meta_data && order.meta_data.some(m => m.key === 'order_source' && m.value === 'POS_OFFLINE')) return true;
+  if (order.customer_name && order.customer_name.toLowerCase().includes('kasir')) return true;
+  return false;
+};
+
 export default function CourierApp() {
   const [activeTab, setActiveTab] = useState<'siap_ambil' | 'tugas_saya' | 'riwayat'>('siap_ambil');
   const [orders, setOrders] = useState<Order[]>([]);
   const [isLoading, setIsLoading] = useState(true);
 
-  // States for delivery completion modal
   const [selectedOrder, setSelectedOrder] = useState<Order | null>(null);
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [proofImage, setProofImage] = useState<string | null>(null);
+  const [proofFile, setProofFile] = useState<File | null>(null);
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [isCompressing, setIsCompressing] = useState(false); 
 
   const fileInputRef = useRef<HTMLInputElement>(null);
 
@@ -53,7 +68,8 @@ export default function CourierApp() {
       const res = await fetch('/api/adminrisman/deliveries');
       if (res.ok) {
         const data = await res.json();
-        setOrders(data.orders || []);
+        const onlineOrders = (data.orders || []).filter((o: Order) => !isOfflinePosOrder(o));
+        setOrders(onlineOrders);
       }
     } catch (err) {
       console.error('Error fetching deliveries:', err);
@@ -64,7 +80,7 @@ export default function CourierApp() {
 
   useEffect(() => {
     fetchOrders();
-    const interval = setInterval(fetchOrders, 30000); // Auto refresh every 30s
+    const interval = setInterval(fetchOrders, 30000); 
     return () => clearInterval(interval);
   }, []);
 
@@ -91,13 +107,14 @@ export default function CourierApp() {
     const file = e.target.files?.[0];
     if (!file) return;
 
-    // Client-side compression using Canvas to save Base64 size
+    setIsCompressing(true); 
+
     const reader = new FileReader();
     reader.onload = (event) => {
       const img = new Image();
       img.onload = () => {
         const canvas = document.createElement('canvas');
-        const MAX_WIDTH = 800;
+        const MAX_WIDTH = 800; 
         const scaleSize = MAX_WIDTH / img.width;
         canvas.width = MAX_WIDTH;
         canvas.height = img.height * scaleSize;
@@ -105,9 +122,16 @@ export default function CourierApp() {
         const ctx = canvas.getContext('2d');
         ctx?.drawImage(img, 0, 0, canvas.width, canvas.height);
 
-        // Convert to highly compressed JPEG base64
-        const dataUrl = canvas.toDataURL('image/jpeg', 0.6);
-        setProofImage(dataUrl);
+        canvas.toBlob((blob) => {
+          if (blob) {
+            const webpFile = new File([blob], `bukti-${Date.now()}.webp`, { type: 'image/webp' });
+            const previewUrl = URL.createObjectURL(webpFile);
+            
+            setProofFile(webpFile); 
+            setProofImage(previewUrl); 
+            setIsCompressing(false); 
+          }
+        }, 'image/webp', 0.7);
       };
       img.src = event.target?.result as string;
     };
@@ -115,37 +139,54 @@ export default function CourierApp() {
   };
 
   const handleCompleteDelivery = async () => {
-    if (!selectedOrder) return;
-    if (!proofImage) {
+    if (!selectedOrder || !proofFile) {
       alert('Mohon sertakan foto bukti pengiriman.');
       return;
     }
 
     setIsSubmitting(true);
     try {
-      const res = await fetch('/api/adminrisman/complete-delivery', {
+      // 1. Upload langsung ke API Astro (Proxy) agar bebas CORS
+      const formData = new FormData();
+      formData.append('file', proofFile);
+
+      const uploadRes = await fetch('/api/adminrisman/upload-proof', {
+        method: 'POST',
+        body: formData 
+      });
+
+      const uploadData = await uploadRes.json();
+
+      if (!uploadRes.ok || !uploadData.success) {
+        throw new Error(uploadData.message || 'Gagal upload foto ke server WordPress');
+      }
+
+      const imageUrl = uploadData.url; 
+
+      // 2. Kirim URL ke server Astro (Cloudflare) untuk update status order (Jangan tunggu response)
+      fetch('/api/adminrisman/complete-delivery', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
           orderId: selectedOrder.id,
-          proofBase64: proofImage,
+          proofImageUrl: imageUrl, 
           paymentMethod: selectedOrder.payment_method_title,
           codReceived: selectedOrder.payment_method_title.toLowerCase().includes('tunai') ? selectedOrder.total : 0
         }),
-      });
-
-      if (res.ok) {
-        alert('Pengiriman berhasil diselesaikan!');
-        setIsModalOpen(false);
-        setProofImage(null);
-        setSelectedOrder(null);
-        fetchOrders();
-        setActiveTab('riwayat');
-      } else {
-        alert('Gagal menyelesaikan pengiriman.');
-      }
-    } catch (err) {
-      alert('Terjadi kesalahan jaringan.');
+      }).catch(err => console.error("Background update status error (diabaikan):", err)); // Abaikan jika error, biar proses background
+      
+      // 3. LANGSUNG TUTUP MODAL & PINDAH RIWAYAT (Tanpa nunggu server)
+      alert('Pengiriman berhasil diselesaikan!');
+      setIsModalOpen(false);
+      setProofImage(null);
+      setProofFile(null);
+      setSelectedOrder(null);
+      fetchOrders();
+      setActiveTab('riwayat');
+      
+    } catch (err: any) {
+      console.error('Delivery error:', err);
+      alert('Terjadi kesalahan: ' + err.message);
     } finally {
       setIsSubmitting(false);
     }
@@ -154,6 +195,7 @@ export default function CourierApp() {
   const openDeliveryModal = (order: Order) => {
     setSelectedOrder(order);
     setProofImage(null);
+    setProofFile(null);
     setIsModalOpen(true);
   };
 
@@ -182,7 +224,6 @@ export default function CourierApp() {
 
   return (
     <div className="flex flex-col min-h-screen bg-slate-50 font-sans text-slate-900 pb-20">
-      {/* Header dengan Tombol Logout */}
       <header className="bg-white px-6 py-4 shadow-sm border-b sticky top-0 z-10 flex items-center justify-between">
         <div>
           <h1 className="text-xl font-bold text-brand">Dashboard Kurir</h1>
@@ -198,7 +239,6 @@ export default function CourierApp() {
         </Button>
       </header>
 
-      {/* Tabs */}
       <div className="flex bg-white border-b px-2 overflow-x-auto">
         <button
           onClick={() => setActiveTab('siap_ambil')}
@@ -220,7 +260,6 @@ export default function CourierApp() {
         </button>
       </div>
 
-      {/* Content */}
       <div className="flex-1 p-4">
         {isLoading ? (
           <div className="flex justify-center items-center py-20 text-brand">
@@ -232,7 +271,6 @@ export default function CourierApp() {
         ) : (
           <div className="space-y-4">
 
-            {/* TAB: SIAP AMBIL */}
             {activeTab === 'siap_ambil' && (
               <>
                 {siapAmbilOrders.length === 0 ? (
@@ -268,7 +306,6 @@ export default function CourierApp() {
               </>
             )}
 
-            {/* TAB: TUGAS SAYA */}
             {activeTab === 'tugas_saya' && (
               <>
                 {tugasSayaOrders.length === 0 ? (
@@ -329,7 +366,6 @@ export default function CourierApp() {
               </>
             )}
 
-            {/* TAB: RIWAYAT */}
             {activeTab === 'riwayat' && (
               <>
                 {riwayatOrders.length === 0 ? (
@@ -370,7 +406,6 @@ export default function CourierApp() {
         )}
       </div>
 
-      {/* Completion Modal */}
       {isModalOpen && selectedOrder && (
         <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/60 backdrop-blur-sm">
           <Card className="w-full max-w-md bg-white overflow-hidden shadow-2xl">
@@ -391,17 +426,29 @@ export default function CourierApp() {
                     onClick={() => fileInputRef.current?.click()}
                     className="w-full h-32 border-2 border-dashed border-slate-300 rounded-lg flex flex-col items-center justify-center text-slate-500 hover:bg-slate-50 transition"
                   >
-                    <svg className="w-8 h-8 mb-2 text-slate-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M3 9a2 2 0 012-2h.93a2 2 0 001.664-.89l.812-1.22A2 2 0 0110.07 4h3.86a2 2 0 011.664.89l.812 1.22A2 2 0 0018.07 7H19a2 2 0 012 2v9a2 2 0 01-2 2H5a2 2 0 01-2-2V9z" />
-                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M15 13a3 3 0 11-6 0 3 3 0 016 0z" />
-                    </svg>
-                    Buka Kamera / Pilih Foto
+                    {isCompressing ? (
+                      <>
+                        <svg className="animate-spin h-8 w-8 mb-2 text-brand" fill="none" viewBox="0 0 24 24">
+                          <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
+                          <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                        </svg>
+                        Memproses Gambar...
+                      </>
+                    ) : (
+                      <>
+                        <svg className="w-8 h-8 mb-2 text-slate-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M3 9a2 2 0 012-2h.93a2 2 0 001.664-.89l.812-1.22A2 2 0 0110.07 4h3.86a2 2 0 011.664.89l.812 1.22A2 2 0 0018.07 7H19a2 2 0 012 2v9a2 2 0 01-2 2H5a2 2 0 01-2-2V9z" />
+                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M15 13a3 3 0 11-6 0 3 3 0 016 0z" />
+                        </svg>
+                        Buka Kamera / Pilih Foto
+                      </>
+                    )}
                   </button>
                 ) : (
                   <div className="relative">
                     <img src={proofImage} alt="Preview" className="w-full h-48 object-cover rounded-lg border border-slate-200 shadow-sm" />
                     <button
-                      onClick={() => setProofImage(null)}
+                      onClick={() => { setProofImage(null); setProofFile(null); }}
                       className="absolute top-2 right-2 bg-red-500 text-white p-1.5 rounded-full shadow hover:bg-red-600"
                     >
                       <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M6 18L18 6M6 6l12 12" /></svg>
@@ -422,7 +469,7 @@ export default function CourierApp() {
                 <Button
                   variant="outline"
                   className="flex-1"
-                  onClick={() => { setIsModalOpen(false); setProofImage(null); }}
+                  onClick={() => { setIsModalOpen(false); setProofImage(null); setProofFile(null); }}
                   disabled={isSubmitting}
                 >
                   Batal
@@ -430,7 +477,7 @@ export default function CourierApp() {
                 <Button
                   className="flex-1 bg-brand hover:bg-brand-dark"
                   onClick={handleCompleteDelivery}
-                  disabled={isSubmitting || !proofImage}
+                  disabled={isSubmitting || !proofFile || isCompressing}
                 >
                   {isSubmitting ? 'Menyimpan...' : 'Kirim & Selesai'}
                 </Button>

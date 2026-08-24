@@ -334,7 +334,7 @@ const title = 'Kasir LaSayurku';
           <div class="tab-filter-bar">
             <button class="tab-btn active" data-cod-status="all">Semua</button>
             <button class="tab-btn" data-cod-status="pending,on-hold">Menunggu Bayar</button>
-            <button class="tab-btn" data-cod-status="processing">Diproses</button>
+            <button class="tab-btn" data-cod-status="processing">Dikirim</button>
             <button class="tab-btn" data-cod-status="completed">Selesai</button>
           </div>
         </div>
@@ -345,6 +345,39 @@ const title = 'Kasir LaSayurku';
         </div>
       </section>
     </main>
+
+    <!-- MODAL LOGIN ADMIN (UNTUK UPDATE STOK) -->
+    <div class="modal-overlay" id="modalAdminLoginStok">
+      <div class="modal" style="max-width: 380px; text-align: center;">
+        <div style="width: 60px; height: 60px; border-radius: 20px; background: var(--accent-soft); color: var(--accent); display: flex; align-items: center; justify-content: center; font-size: 26px; margin: 0 auto 16px;">
+          <i class="fas fa-lock"></i>
+        </div>
+        <h3 style="font-size: 20px; font-weight: 800; margin-bottom: 8px;">Akses Terkunci</h3>
+        <p style="color: var(--muted); font-size: 14px; margin-bottom: 20px;">Masukkan kredensial Administrator untuk mengubah stok.</p>
+        
+        <div id="adminLoginError" class="hidden mb-4 rounded-lg bg-red-50 p-3 text-sm text-red-600 border border-red-200"></div>
+
+        <div class="mb-4 text-left">
+          <label style="font-size: 12px; font-weight: 700; color: var(--muted); display: block; margin-bottom: 6px; text-transform: uppercase;">Username</label>
+          <input type="text" id="adminStokUsername" class="input" placeholder="Masukkan username admin" style="border-radius: 12px !important;" />
+        </div>
+
+        <div class="mb-6 text-left">
+          <label style="font-size: 12px; font-weight: 700; color: var(--muted); display: block; margin-bottom: 6px; text-transform: uppercase;">Password</label>
+          <div style="position: relative;">
+            <input type="password" id="adminStokPassword" class="input" placeholder="Masukkan password" style="border-radius: 12px !important; padding-right: 40px;" />
+            <button type="button" id="toggleAdminStokPass" style="position: absolute; right: 12px; top: 50%; transform: translateY(-50%); background: none; border: none; cursor: pointer; color: var(--muted);">
+              <i class="fas fa-eye"></i>
+            </button>
+          </div>
+        </div>
+
+        <div style="display: flex; gap: 10px;">
+          <button class="btn" style="flex: 1; border: 1px solid #e2e8f0; background: white; padding: 12px;" id="btnCancelAdminStok">Batal</button>
+          <button class="btn btn-primary" style="flex: 1; padding: 12px;" id="btnVerifyAdminStok">Verifikasi</button>
+        </div>
+      </div>
+    </div>
 
     <!-- MODAL UPDATE STOK -->
     <div class="modal-overlay" id="modalUpdateStok">
@@ -447,6 +480,7 @@ const title = 'Kasir LaSayurku';
     </script>
 
     <script is:inline>
+      let pendingEditProductId = null;
       let products = [];
       let historyOrders = [];
       let allCodOrders = []; 
@@ -630,11 +664,59 @@ const title = 'Kasir LaSayurku';
       }
 
       function openUpdateStokModal(productId = null) {
-        const select = document.getElementById('updateStokProductSelect');
-        if (productId && select) select.value = String(productId);
-        document.getElementById('updateStokQty').value = 0;
-        document.getElementById('updateStokNote').value = '';
-        document.getElementById('modalUpdateStok').classList.add('show');
+        pendingEditProductId = productId;
+        document.getElementById('adminStokUsername').value = '';
+        document.getElementById('adminStokPassword').value = '';
+        document.getElementById('adminLoginError').classList.add('hidden');
+        document.getElementById('modalAdminLoginStok').classList.add('show');
+      }
+
+      async function verifyAdminStokLogin() {
+        const u = document.getElementById('adminStokUsername').value;
+        const p = document.getElementById('adminStokPassword').value;
+        const errEl = document.getElementById('adminLoginError');
+        const btnVerify = document.getElementById('btnVerifyAdminStok');
+        
+        btnVerify.disabled = true;
+        btnVerify.textContent = 'Memverifikasi...';
+
+        try {
+          // Melakukan request login ke API WordPress / WooCommerce
+          const res = await fetch('/api/auth/login', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ username: u, password: p }),
+          });
+          const data = await res.json();
+
+          if (res.ok || data.token || data.success) {
+            const rawRole = data.user_role || data.roles || data.role || "";
+            const roleStr = (Array.isArray(rawRole) ? rawRole[0] : rawRole).toString().toLowerCase().trim();
+            
+            // Cek apakah yang login adalah Administrator
+            if (roleStr.includes('admin') || roleStr === 'administrator') {
+              document.getElementById('modalAdminLoginStok').classList.remove('show');
+              
+              const select = document.getElementById('updateStokProductSelect');
+              if (pendingEditProductId && select) select.value = String(pendingEditProductId);
+              document.getElementById('updateStokQty').value = 0;
+              document.getElementById('updateStokNote').value = '';
+              document.getElementById('modalUpdateStok').classList.add('show');
+            } else {
+              errEl.textContent = 'Akses Ditolak. Hanya Administrator yang dapat mengubah stok.';
+              errEl.classList.remove('hidden');
+            }
+          } else {
+            errEl.textContent = data.message || 'Username atau Password salah! Akses ditolak.';
+            errEl.classList.remove('hidden');
+          }
+        } catch (err) {
+          errEl.textContent = 'Terjadi kesalahan jaringan saat verifikasi.';
+          errEl.classList.remove('hidden');
+        } finally {
+          btnVerify.disabled = false;
+          btnVerify.textContent = 'Verifikasi';
+        }
       }
 
       async function submitUpdateStok() {
@@ -742,11 +824,12 @@ const title = 'Kasir LaSayurku';
           
           let statusClass = 'status-pending';
           let statusText = 'Menunggu Pembayaran';
-          if (order.status === 'processing') { statusClass = 'status-processing'; statusText = 'Diproses'; }
+          if (order.status === 'processing') { statusClass = 'status-processing'; statusText = 'Dikirim'; }
           if (order.status === 'completed') { statusClass = 'status-completed'; statusText = 'Selesai'; }
           if (order.status === 'cancelled') { statusClass = 'status-cancelled'; statusText = 'Dibatalkan'; }
 
           const isPending = ['pending', 'on-hold'].includes(order.status);
+          const isProcessing = order.status === 'processing';
 
           return `
             <div class="order-card">
@@ -770,8 +853,13 @@ const title = 'Kasir LaSayurku';
                     <i class="fas fa-eye"></i> Detail
                   </button>
                   ${isPending ? `
-                    <button class="btn btn-primary" style="padding:8px 12px; font-size:12px;" data-confirm-order-id="${order.id}">
-                      <i class="fas fa-check"></i> Konfirmasi Bayar
+                    <button class="btn btn-primary" style="padding:8px 12px; font-size:12px;" data-update-status="${order.id}" data-new-status="processing">
+                      <i class="fas fa-paper-plane"></i> Kirim
+                    </button>
+                  ` : ''}
+                  ${isProcessing ? `
+                    <button class="btn" style="padding:8px 12px; font-size:12px; background:#16a34a; color:white; box-shadow: 0 2px 6px rgba(22,163,74,0.2);" data-update-status="${order.id}" data-new-status="completed">
+                      <i class="fas fa-money-check-dollar"></i> Bayar
                     </button>
                   ` : ''}
                 </div>
@@ -780,8 +868,8 @@ const title = 'Kasir LaSayurku';
           `;
         }).join('');
 
-        listEl.querySelectorAll('[data-confirm-order-id]').forEach(btn => {
-          btn.addEventListener('click', () => handleConfirmOrder(btn.getAttribute('data-confirm-order-id'), btn));
+        listEl.querySelectorAll('[data-update-status]').forEach(btn => {
+          btn.addEventListener('click', () => handleUpdateStatus(btn.getAttribute('data-update-status'), btn.getAttribute('data-new-status'), btn));
         });
 
         listEl.querySelectorAll('[data-view-cod-id]').forEach(btn => {
@@ -789,8 +877,10 @@ const title = 'Kasir LaSayurku';
         });
       }
 
-      async function handleConfirmOrder(orderId, btn) {
-        if (!confirm('Apakah pembayaran pesanan ini sudah masuk dan valid?')) return;
+      async function handleUpdateStatus(orderId, newStatus, btn) {
+        const actionText = newStatus === 'processing' ? 'mengirim' : 'menyelesaikan pembayaran';
+        if (!confirm(`Apakah Anda yakin ingin ${actionText} pesanan ini?`)) return;
+        
         const originalText = btn.innerHTML;
         btn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Proses...';
         btn.disabled = true;
@@ -799,17 +889,17 @@ const title = 'Kasir LaSayurku';
           const res = await fetch('/api/adminrisman/orders', {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ orderId, status: 'processing' })
+            body: JSON.stringify({ orderId, status: newStatus })
           });
-          if (!res.ok) throw new Error('Gagal konfirmasi');
+          if (!res.ok) throw new Error('Gagal memproses');
           
-          showToast('Pesanan berhasil dikonfirmasi!');
+          showToast(`Pesanan berhasil diproses!`);
           const order = allCodOrders.find(o => String(o.id) === String(orderId));
-          if(order) order.status = 'processing';
+          if(order) order.status = newStatus;
           updateCodStats();
           renderCodOrders();
         } catch (err) {
-          showToast('Gagal mengkonfirmasi pesanan', 'error');
+          showToast('Gagal memproses pesanan', 'error');
           btn.innerHTML = originalText;
           btn.disabled = false;
         }
@@ -992,6 +1082,31 @@ const title = 'Kasir LaSayurku';
 
         const btnSubmitUpdateStok = document.getElementById('btnSubmitUpdateStok');
         if (btnSubmitUpdateStok) btnSubmitUpdateStok.addEventListener('click', submitUpdateStok);
+
+        // EVENT LISTENER UNTUK MODAL LOGIN ADMIN STOK
+        const btnCancelAdminStok = document.getElementById('btnCancelAdminStok');
+        if (btnCancelAdminStok) btnCancelAdminStok.addEventListener('click', () => document.getElementById('modalAdminLoginStok').classList.remove('show'));
+
+        const btnVerifyAdminStok = document.getElementById('btnVerifyAdminStok');
+        if (btnVerifyAdminStok) btnVerifyAdminStok.addEventListener('click', verifyAdminStokLogin);
+
+        // Toggle Password Mata
+        const toggleAdminStokPass = document.getElementById('toggleAdminStokPass');
+        if (toggleAdminStokPass) {
+          toggleAdminStokPass.addEventListener('click', () => {
+            const passInput = document.getElementById('adminStokPassword');
+            const icon = toggleAdminStokPass.querySelector('i');
+            if (passInput.type === 'password') {
+              passInput.type = 'text';
+              icon.classList.remove('fa-eye');
+              icon.classList.add('fa-eye-slash');
+            } else {
+              passInput.type = 'password';
+              icon.classList.remove('fa-eye-slash');
+              icon.classList.add('fa-eye');
+            }
+          });
+        }
 
         const searchHistory = document.getElementById('searchHistory');
         if (searchHistory) searchHistory.addEventListener('input', renderHistoryTable);

@@ -1,0 +1,49 @@
+---
+export const prerender = false;
+import CourierApp from '../components/kurir/CourierApp';
+---
+<!DOCTYPE html>
+<html lang="id">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Kurir - La Sayurku</title>
+</head>
+<body>
+  <div class="min-h-screen bg-slate-50 text-slate-900 overflow-hidden">
+    <CourierApp client:only="react" />
+  </div>
+
+  <script>
+    import { getAdminSession, roleAllowed } from '../lib/adminAuth';
+
+    document.addEventListener('DOMContentLoaded', () => {
+      const session = getAdminSession('online') || getAdminSession();
+      const allowed = ['kurir', 'administrator', 'admin'];
+      
+      const SESSION_DURATION = 12 * 60 * 60 * 1000; // 12 Jam
+      const loginTimeStr = localStorage.getItem('kasir_login_time');
+      
+      let isSessionValid = false;
+
+      if (session && roleAllowed(session.role, allowed)) {
+        if (loginTimeStr) {
+          const loginTime = parseInt(loginTimeStr, 10);
+          if (Date.now() - loginTime < SESSION_DURATION) {
+            isSessionValid = true;
+          } else {
+            localStorage.removeItem('admin_session');
+            localStorage.removeItem('kasir_login_time');
+          }
+        } else {
+          localStorage.removeItem('admin_session');
+        }
+      }
+
+      if (!isSessionValid) {
+        window.location.replace('/login?from=admin&error=denied');
+      }
+    });
+  </script>
+</body>
+</html>

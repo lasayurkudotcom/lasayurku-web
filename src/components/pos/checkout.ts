@@ -28,6 +28,7 @@ export const POST: APIRoute = async ({ request }) => {
             },
             line_items: body.line_items,
             customer_note: body.customer_note || 'Transaksi Kasir Offline',
+            meta_data: body.meta_data || [] // <-- AMBIL DATA META DARI POSAPP REACT
         };
 
         const order = await createOrder(orderPayload);

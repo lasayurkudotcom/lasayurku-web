@@ -340,7 +340,7 @@ import Layout from "../layouts/Layout.astro";
       });
     }
 
-    // 2. CLIENT-SIDE FORM SUBMISSION HANDLER -> PAKSA REDIRECT KE /adminrisman/kasir ATAU /adminrisman
+    // 2. CLIENT-SIDE FORM SUBMISSION HANDLER -> PAKSA REDIRECT KE HALAMAN MASING-MASING
     if (loginForm) {
       loginForm.addEventListener("submit", async (e) => {
         e.preventDefault();
@@ -409,10 +409,11 @@ import Layout from "../layouts/Layout.astro";
 
             const finalRole = (data.user_role?.toString().toLowerCase() || roleVal).trim();
 
+            // REDIRECT BERDASARKAN ROLE
             if (finalRole.includes("kurir") || roleVal === "kurir") {
-              window.location.href = "/adminrisman/kurir";
+              window.location.href = "/kurir"; // DIUBAH KE /kurir
             } else if (finalRole.includes("packing") || roleVal === "packing") {
-              window.location.href = "/adminrisman/packing";
+              window.location.href = "/packing"; // DIUBAH KE /packing
             } else if (
               finalRole.includes("admin") ||
               finalRole === "administrator" ||
