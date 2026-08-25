@@ -128,7 +128,7 @@ export const POST: APIRoute = async ({ request }) => {
         user_email: authData.user_email,
         user_nicename: authData.user_nicename,
         user_display_name: authData.user_display_name,
-        user_role: resolvedRole,
+        user_role: resolvedRole || 'pelanggan',
         customer_id: customerId,
       }),
       { status: 200, headers: { 'Content-Type': 'application/json' } }

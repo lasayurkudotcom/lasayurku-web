@@ -82,6 +82,21 @@ export function setAdminSession(session: AdminSession): void {
   setCookie('auth_token', token);
 }
 
+export function setCustomerSession(session: AdminSession): void {
+  const token = session.token || '';
+  const nicename = session.user_nicename || 'Pengguna';
+  const email = session.user_email || '';
+
+  writeStorage('user_token', token);
+  writeStorage('user_role', 'pelanggan');
+  writeStorage('user_nicename', nicename);
+  writeStorage('user_email', email);
+
+  setCookie('user_token', token);
+  setCookie('user_role', 'pelanggan');
+  setCookie('user_nicename', nicename);
+}
+
 export function setPosAuthCookies(session: AdminSession): void {
   const role = session.role || 'pelanggan';
   const token = session.token || '';

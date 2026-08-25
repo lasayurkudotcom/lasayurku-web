@@ -23,7 +23,7 @@ import Layout from "../layouts/Layout.astro";
       <h1 class="mb-6 text-2xl font-bold text-center">
         Selamat Datang Kembali
       </h1>
-      <form id="login-form" class="flex flex-col gap-4">
+      <form id="login-form" autocomplete="off" class="flex flex-col gap-4">
         <div>
           <label class="block text-sm font-medium text-gray-700 mb-1"
             >Email atau Username</label
@@ -32,6 +32,7 @@ import Layout from "../layouts/Layout.astro";
             type="text"
             name="username"
             id="email"
+            autocomplete="off"
             required
             class="w-full rounded-xl border border-gray-300 px-4 py-2.5 focus:border-brand focus:outline-none focus:ring-1 focus:ring-brand"
           />
@@ -53,6 +54,7 @@ import Layout from "../layouts/Layout.astro";
               type="password"
               name="password"
               id="password"
+              autocomplete="new-password"
               required
               class="w-full rounded-xl border border-gray-300 px-4 py-2.5 pr-12 focus:border-brand focus:outline-none focus:ring-1 focus:ring-brand"
             />
@@ -183,9 +185,10 @@ import Layout from "../layouts/Layout.astro";
 
 <script>
   import {
-    setAdminSession,
-    setPosAuthCookies,
-  } from '../lib/adminAuth';
+      setAdminSession,
+      setCustomerSession,
+      setPosAuthCookies,
+    } from '../lib/adminAuth';
   import { resolveRoleFromLoginHints } from '../lib/posAuth';
 
   // Hapus semua sesi lama agar login tidak otomatis masuk dari token yang tertinggal
@@ -214,7 +217,16 @@ import Layout from "../layouts/Layout.astro";
     });
   })();
 
+  function clearLoginFields() {
+    document.querySelectorAll<HTMLInputElement>('#login-form input, #register-form input').forEach((input) => {
+      input.value = '';
+    });
+  }
+
+  window.addEventListener('pageshow', clearLoginFields);
+
   document.addEventListener("DOMContentLoaded", () => {
+    clearLoginFields();
     const tabLogin = document.getElementById("tab-login");
     const tabRegister = document.getElementById("tab-register");
     const loginContainer = document.getElementById("login-form-container");
@@ -364,10 +376,8 @@ import Layout from "../layouts/Layout.astro";
             body: JSON.stringify({ username, password }),
           });
           const data = await res.json();
-          console.log('🔍 login API response:', data);
-
-          if (res.ok || data.token || data.success) {
-            const tokenVal = data.token || "dummy_auth_token";
+          if (res.ok && data.token) {
+            const tokenVal = data.token;
             const rawRole = data.user_role || data.roles || data.role || "";
             const roleStr = (Array.isArray(rawRole) ? rawRole[0] : rawRole)
               .toString()
@@ -376,26 +386,23 @@ import Layout from "../layouts/Layout.astro";
 
             const usernameStr = String(username || "");
             const normalizedRole = resolveRoleFromLoginHints(roleStr, usernameStr);
-            const roleVal =
-              normalizedRole !== "pelanggan"
-                ? normalizedRole
-                : roleStr || "pelanggan";
+            const roleVal = normalizedRole;
 
             const nicename = data.user_nicename || usernameStr || "Pengguna";
             const email = data.user_email || usernameStr || "";
 
-            setAdminSession({
+            const session = {
               token: tokenVal,
               role: roleVal,
               user_nicename: nicename,
               user_email: email,
-            });
-            setPosAuthCookies({
-              token: tokenVal,
-              role: roleVal,
-              user_nicename: nicename,
-              user_email: email,
-            });
+            };
+            if (roleVal === 'pelanggan') {
+              setCustomerSession(session);
+            } else {
+              setAdminSession(session);
+              setPosAuthCookies(session);
+            }
 
             // CATAT WAKTU LOGIN UNTUK KEDALUWARSAAAN SESI KASIR
             localStorage.setItem('kasir_login_time', Date.now().toString());
@@ -500,18 +507,12 @@ import Layout from "../layouts/Layout.astro";
             }),
           });
 
-          if (loginRes.ok) {
-            const loginData = await loginRes.json();
-            const tokenVal = loginData.token || "dummy_auth_token";
+          const loginData = await loginRes.json();
+          if (loginRes.ok && loginData.token) {
+            const tokenVal = loginData.token;
             const roleVal = "pelanggan";
             
-            setAdminSession({
-              token: tokenVal,
-              role: roleVal,
-              user_nicename: formData.get("email") as string,
-              user_email: formData.get("email") as string,
-            });
-            setPosAuthCookies({
+            setCustomerSession({
               token: tokenVal,
               role: roleVal,
               user_nicename: formData.get("email") as string,

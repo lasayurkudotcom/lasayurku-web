@@ -64,6 +64,10 @@ export function resolveRoleFromLoginHints(
   const roleLower = roleStr.toLowerCase().trim();
   const usernameLower = username.toLowerCase();
 
+  if (roleLower === 'customer' || roleLower === 'subscriber' || roleLower === 'pelanggan') {
+    return 'pelanggan';
+  }
+
   if (roleLower.includes('kurir') || usernameLower.includes('kurir')) return 'kurir';
   if (roleLower.includes('packing') || usernameLower.includes('packing')) return 'packing';
   if (

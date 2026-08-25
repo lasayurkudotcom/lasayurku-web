@@ -14,14 +14,24 @@ export async function onRequest(context, next) {
     const url = new URL(request.url);
     const pathname = url.pathname;
 
-    if (pathname === '/kasir' || pathname.startsWith('/kasir/')) {
+    if (
+      pathname === '/kasir' ||
+      pathname.startsWith('/kasir/') ||
+      pathname === '/kurir' ||
+      pathname.startsWith('/kurir/') ||
+      pathname === '/packing' ||
+      pathname.startsWith('/packing/')
+    ) {
       const cookies = parseCookieHeader(request.headers.get('cookie') || '');
       const token = cookies['pos_online_token'] || cookies['admin_token'] || cookies['auth_token'] || cookies['user_token'] || '';
       const userRole = (cookies['pos_online_role'] || cookies['admin_user_role'] || cookies['user_role'] || '').toLowerCase();
+      const isStaffPath = pathname === '/kasir' || pathname.startsWith('/kasir/')
+        ? isKasirOnlineRole(userRole) || isAdminRole(userRole)
+        : pathname === '/kurir' || pathname.startsWith('/kurir/')
+          ? userRole.includes('kurir') || isAdminRole(userRole)
+          : userRole.includes('packing') || isAdminRole(userRole);
 
-      // Allow unauthenticated access untuk login overlay (page akan show login overlay client-side)
-      // Hanya reject jika token ada tapi role salah
-      if (token && !isKasirOnlineRole(userRole)) {
+      if (!token || !isStaffPath) {
         return context.redirect
           ? context.redirect('/login?from=admin&error=denied')
           : new Response(null, {

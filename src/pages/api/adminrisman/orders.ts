@@ -198,6 +198,7 @@ export const GET: APIRoute = async ({ url }) => {
           address: o.shipping?.address_1 || o.billing?.address_1 || '-', // PENGAMBILAN ALAMAT DARI WC
           delivery_type: o.payment_method === 'cash' ? '🛒 Kasir POS Direct' : '🚚 Kurir Express',
           payment_method_title: o.payment_method_title || 'Lunas',
+          payment_method: o.payment_method || '',
           customer_note: o.customer_note || '',
           total: o.total,
           line_items: (o.line_items || []).map((item: any) => ({
