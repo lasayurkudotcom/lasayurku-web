@@ -31,9 +31,9 @@ export const POST: APIRoute = async ({ request }) => {
 
     const base = WC_URL.replace(/\/$/, '');
 
-    // Gunakan status 'processing' terlebih dahulu agar tidak memicu hook email berat secara bersamaan
+    // Transaksi POS sudah dibayar di kasir, jadi harus langsung masuk rekap setoran.
     const orderPayload = {
-      status: 'processing',
+      status: 'completed',
       payment_method: body.payment_method || 'pos_cash',
       payment_method_title: body.payment_method_title || 'Tunai Toko / POS',
       set_paid: true,
@@ -80,16 +80,6 @@ export const POST: APIRoute = async ({ request }) => {
         }
       );
     }
-
-    // Eksekusi update status ke 'completed' di background (tanpa ditunggu/async) agar respon ke kasir kilat
-    fetch(`${base}/wp-json/wc/v3/orders/${data.id}`, {
-      method: 'PUT',
-      headers: {
-        Authorization: getAuthHeader(),
-        'Content-Type': 'application/json',
-      },
-      body: JSON.stringify({ status: 'completed' }),
-    }).catch((err) => console.error('[POS Async Complete Error]:', err));
 
     return new Response(JSON.stringify(data), {
       status: 201,

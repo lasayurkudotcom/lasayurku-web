@@ -1217,10 +1217,21 @@ const title = 'Kasir LaSayurku';
           const orders = Array.isArray(data) ? data : (data.orders || data.data || []);
 
           const today = new Date().toISOString().split('T')[0];
+          
+          // Filter lebih aman: Ambil semua transaksi hari ini yang METODENYA BUKAN QRIS / Transfer Bank
           const cashOrders = orders.filter(o => {
-            const isToday = o.date_created ? new Date(o.date_created).toISOString().split('T')[0] === today : false;
-            const isCash = o.payment_method === 'pos_cash' || (o.payment_method_title && o.payment_method_title.toLowerCase().includes('tunai'));
-            return isToday && isCash;
+            const orderDate = o.date_created ? new Date(o.date_created).toISOString().split('T')[0] : null;
+            if(orderDate !== today) return false; // Hanya transaksi hari ini
+            
+            // Cek metode pembayaran (memastikan bukan QRIS atau Transfer Bank dari online)
+            const method = (o.payment_method || '').toLowerCase();
+            const methodTitle = (o.payment_method_title || '').toLowerCase();
+            
+            if (method.includes('qris') || methodTitle.includes('qris') || methodTitle.includes('transfer') || method.includes('bacs')) {
+              return false; // Abaikan jika online payment
+            }
+            
+            return true; // Anggap sebagai tunai offline (POS / Cash)
           });
 
           expectedCash = cashOrders.reduce((sum, o) => sum + Number(o.total || 0), 0);

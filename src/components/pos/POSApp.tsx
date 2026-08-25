@@ -80,8 +80,6 @@ export default function POSApp() {
       .replace(/&#039;/g, "'");
   };
 
-  // Fungsi handleLogout dihapus dari React, karena sudah ditangani oleh Sidebar Astro (Tutup Kasir)
-
   const fetchCategories = async () => {
     try {
       const res = await fetch('/api/adminrisman/pos/categories?per_page=30');
@@ -275,11 +273,18 @@ export default function POSApp() {
         ],
       };
 
+      // Tambahkan Timeout 15 Detik agar tidak macet selamanya
+      const controller = new AbortController();
+      const timeoutId = setTimeout(() => controller.abort(), 15000);
+
       const res = await fetch('/api/adminrisman/pos/checkout', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(payload),
+        signal: controller.signal,
       });
+
+      clearTimeout(timeoutId);
 
       const data = await res.json();
 
@@ -297,8 +302,16 @@ export default function POSApp() {
         );
       }
     } catch (err: any) {
-      console.error('Network/Client Error:', err);
-      alert('Terjadi kesalahan jaringan atau koneksi API terputus.');
+      if (err.name === 'AbortError') {
+        // Jika timeout (lebih dari 15 detik)
+        alert('Server sedang lambat merespons. Transaksi tetap tercatat di server, silakan cek halaman Histori.');
+        setCart([]);
+        setCashReceived('');
+        setIsMobileCartOpen(false);
+      } else {
+        console.error('Network/Client Error:', err);
+        alert('Terjadi kesalahan jaringan atau koneksi API terputus.');
+      }
     } finally {
       setIsSubmitting(false);
     }
