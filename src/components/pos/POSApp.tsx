@@ -80,25 +80,7 @@ export default function POSApp() {
       .replace(/&#039;/g, "'");
   };
 
-  const handleLogout = () => {
-    if (confirm('Apakah Anda yakin ingin keluar dari Kasir POS?')) {
-      if (typeof window !== 'undefined') {
-        const keysToClear = [
-          'pos_offline_token', 'pos_offline_role', 'pos_offline_nicename',
-          'pos_online_token', 'pos_online_role', 'pos_online_nicename',
-          'admin_token', 'auth_token', 'user_token',
-          'admin_user_role', 'user_role',
-          'admin_user_nicename', 'user_nicename', 'admin_user_email', 'user_email',
-        ];
-
-        keysToClear.forEach((key) => localStorage.removeItem(key));
-        keysToClear.forEach((key) => {
-          document.cookie = `${key}=; expires=Thu, 01 Jan 1970 00:00:00 UTC; path=/;`;
-        });
-        window.location.href = '/login?from=admin';
-      }
-    }
-  };
+  // Fungsi handleLogout dihapus dari React, karena sudah ditangani oleh Sidebar Astro (Tutup Kasir)
 
   const fetchCategories = async () => {
     try {
@@ -507,6 +489,7 @@ export default function POSApp() {
             Terhubung ke API
           </div>
 
+          {/* Tombol Logout sudah dihapus dari sini, dipindah ke Sidebar Astro */}
           <div className="border-l pl-2 md:pl-4 flex items-center gap-2">
             <div className="flex items-center gap-2">
               <div className="h-7 w-7 md:h-8 md:w-8 rounded-full bg-emerald-100 flex items-center justify-center text-emerald-700 font-bold text-xs md:text-sm">
@@ -516,15 +499,6 @@ export default function POSApp() {
                 {cashierName}
               </span>
             </div>
-
-            <Button
-              variant="outline"
-              size="sm"
-              onClick={handleLogout}
-              className="text-[10px] md:text-xs text-red-600 border-red-200 hover:bg-red-50 hover:text-red-700 h-7 px-2 ml-1"
-            >
-              Logout
-            </Button>
           </div>
         </div>
       </header>
