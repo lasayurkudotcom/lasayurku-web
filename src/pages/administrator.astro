@@ -1,8 +1,8 @@
 ---
-import AdminDashboardLayout from '../layouts/AdminDashboardLayout.astro';
+import TokoKirimLayout from '../layouts/TokoKirimLayout.astro';
 ---
 
-<AdminDashboardLayout title="Dasbor Admin - LaSayurku" activeModule="dashboard" allowedRoles={['administrator', 'admin']}>
+<TokoKirimLayout title="Dasbor Admin - LaSayurku" activeModule="dashboard" allowedRoles={['administrator', 'admin']}>
     <div class="grid grid-cols-2 lg:grid-cols-4 gap-4 mb-6">
         <div class="stat-card green bg-white rounded-xl p-4 border border-gray-100 card-hover cursor-pointer" data-order-filter="today">
             <div class="flex items-center gap-3 mb-3">
@@ -268,4 +268,4 @@ import AdminDashboardLayout from '../layouts/AdminDashboardLayout.astro';
         fetchDashboardData();
         setInterval(fetchDashboardData, 30000);
     </script>
-</AdminDashboardLayout>
+</TokoKirimLayout>
