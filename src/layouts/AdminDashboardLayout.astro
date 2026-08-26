@@ -8,7 +8,7 @@ interface Props {
 }
 
 const {
-  title = 'TokoKirim - Sistem Toko & Pengiriman',
+    title = 'LaSayurku - Dashboard Administrator',
   activeModule = 'dashboard',
   allowedRoles = ['administrator', 'admin'],
 } = Astro.props;
@@ -67,36 +67,35 @@ const {
             </div>
             <div>
                 <h1 class="text-white font-bold text-base leading-tight">LaSayurku</h1>
-                <p class="text-[10px] text-gray-500 tracking-wider">SISTEM TOKO & PENGIRIMAN</p>
+                <p class="text-[10px] text-gray-500 tracking-wider">DASHBOARD ADMINISTRATOR</p>
             </div>
         </div>
     </div>
     <nav class="flex-1 overflow-y-auto py-2" id="sideNav">
         <div class="sidebar-section">Utama</div>
-        <a href="/adminrisman" class={`nav-item flex items-center gap-3 px-5 py-2.5 cursor-pointer ${activeModule === 'dashboard' ? 'active' : ''}`}>
+        <a href="/administrator" class={`nav-item flex items-center gap-3 px-5 py-2.5 cursor-pointer ${activeModule === 'dashboard' ? 'active' : ''}`}>
             <i class="fa-solid fa-chart-pie nav-icon w-5 text-center text-sm"></i><span class="text-sm">Dasbor</span>
         </a>
         <a href="/kasir" class={`nav-item flex items-center gap-3 px-5 py-2.5 cursor-pointer ${activeModule === 'kasir' ? 'active' : ''}`}>
             <i class="fa-solid fa-cash-register nav-icon w-5 text-center text-sm"></i><span class="text-sm">Kasir</span>
         </a>
-        <a href="/adminrisman/packing" class={`nav-item flex items-center gap-3 px-5 py-2.5 cursor-pointer ${activeModule === 'packing' ? 'active' : ''}`}>
+        <a href="/packing" class={`nav-item flex items-center gap-3 px-5 py-2.5 cursor-pointer ${activeModule === 'packing' ? 'active' : ''}`}>
             <i class="fa-solid fa-box nav-icon w-5 text-center text-sm"></i><span class="text-sm">Packing</span>
         </a>
-        <a href="/adminrisman/kurir" class={`nav-item flex items-center gap-3 px-5 py-2.5 cursor-pointer ${activeModule === 'kurir' ? 'active' : ''}`}>
+        <a href="/kurir" class={`nav-item flex items-center gap-3 px-5 py-2.5 cursor-pointer ${activeModule === 'kurir' ? 'active' : ''}`}>
             <i class="fa-solid fa-truck-fast nav-icon w-5 text-center text-sm"></i><span class="text-sm">Kurir</span>
         </a>
 
-        <!-- Dummy Links -->
         <div class="sidebar-section">Pesanan</div>
-        <a href="#" class="nav-item flex items-center gap-3 px-5 py-2.5 cursor-pointer" onclick="alert('Ini adalah dummy link (belum diimplementasikan)')">
+        <a href="/administrator#orders" class="nav-item flex items-center gap-3 px-5 py-2.5 cursor-pointer">
             <i class="fa-solid fa-clipboard-list nav-icon w-5 text-center text-sm"></i><span class="text-sm">Semua Pesanan</span>
         </a>
         <div class="sidebar-section">Manajemen</div>
-        <a href="#" class="nav-item flex items-center gap-3 px-5 py-2.5 cursor-pointer" onclick="alert('Ini adalah dummy link (belum diimplementasikan)')">
-            <i class="fa-solid fa-users nav-icon w-5 text-center text-sm"></i><span class="text-sm">Pelanggan</span>
-        </a>
-        <a href="#" class="nav-item flex items-center gap-3 px-5 py-2.5 cursor-pointer" onclick="alert('Ini adalah dummy link (belum diimplementasikan)')">
+        <a href="/kasir" class="nav-item flex items-center gap-3 px-5 py-2.5 cursor-pointer">
             <i class="fa-solid fa-boxes-stacked nav-icon w-5 text-center text-sm"></i><span class="text-sm">Daftar Produk</span>
+        </a>
+        <a href="/" class="nav-item flex items-center gap-3 px-5 py-2.5 cursor-pointer">
+            <i class="fa-solid fa-store nav-icon w-5 text-center text-sm"></i><span class="text-sm">Website Toko</span>
         </a>
         <div class="sidebar-section">Sistem</div>
         <a href="#" id="admin-logout-btn-sidebar" class="nav-item nav-danger flex items-center gap-3 px-5 py-2.5 cursor-pointer">

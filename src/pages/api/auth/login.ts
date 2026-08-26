@@ -16,6 +16,10 @@ function detectRoleFromNicename(nicename: string | undefined | null): string | n
   return null;
 }
 
+function cookieHeader(name: string, value: string): string {
+  return `${name}=${encodeURIComponent(value)}; Path=/; Max-Age=2592000; SameSite=Lax`;
+}
+
 export const POST: APIRoute = async ({ request }) => {
   try {
     const body = await request.json();
@@ -28,7 +32,7 @@ export const POST: APIRoute = async ({ request }) => {
       });
     }
 
-    const WC_URL = import.meta.env.PUBLIC_WOOCOMMERCE_URL;
+    const WC_URL = import.meta.env.WOOCOMMERCE_URL || import.meta.env.PUBLIC_WOOCOMMERCE_URL;
     if (!WC_URL) {
       return new Response(JSON.stringify({ message: 'Konfigurasi server tidak lengkap' }), {
         status: 500,
@@ -94,7 +98,8 @@ export const POST: APIRoute = async ({ request }) => {
     if (!resolvedRole || resolvedRole === 'customer' || resolvedRole === 'subscriber') {
       const detected =
         detectRoleFromNicename(authData.user_nicename) ||
-        detectRoleFromNicename(username);
+        detectRoleFromNicename(authData.user_display_name) ||
+        detectRoleFromNicename(username.trim());
       if (detected) {
         resolvedRole = detected;
       } else if (username.toLowerCase() === 'risman') {
@@ -121,6 +126,17 @@ export const POST: APIRoute = async ({ request }) => {
       }
     } catch { /* non-critical */ }
 
+    const responseHeaders = new Headers({ 'Content-Type': 'application/json' });
+    const roleForSession = resolvedRole || 'pelanggan';
+    if (roleForSession !== 'pelanggan') {
+      responseHeaders.append('Set-Cookie', cookieHeader('admin_token', token));
+      responseHeaders.append('Set-Cookie', cookieHeader('auth_token', token));
+      responseHeaders.append('Set-Cookie', cookieHeader('user_token', token));
+      responseHeaders.append('Set-Cookie', cookieHeader('admin_user_role', roleForSession));
+      responseHeaders.append('Set-Cookie', cookieHeader('user_role', roleForSession));
+      responseHeaders.append('Set-Cookie', cookieHeader('user_nicename', authData.user_nicename || username));
+    }
+
     return new Response(
       JSON.stringify({
         message: 'Berhasil masuk',
@@ -128,10 +144,10 @@ export const POST: APIRoute = async ({ request }) => {
         user_email: authData.user_email,
         user_nicename: authData.user_nicename,
         user_display_name: authData.user_display_name,
-        user_role: resolvedRole || 'pelanggan',
+        user_role: roleForSession,
         customer_id: customerId,
       }),
-      { status: 200, headers: { 'Content-Type': 'application/json' } }
+      { status: 200, headers: responseHeaders }
     );
   } catch (error: any) {
     return new Response(

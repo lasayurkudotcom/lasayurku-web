@@ -1,10 +1,10 @@
 ---
-import TokoKirimLayout from '../layouts/TokoKirimLayout.astro';
+import AdminDashboardLayout from '../layouts/AdminDashboardLayout.astro';
 ---
 
-<TokoKirimLayout title="Dasbor Admin - LaSayurku" activeModule="dashboard" allowedRoles={['administrator', 'admin']}>
+<AdminDashboardLayout title="Dasbor Admin - LaSayurku" activeModule="dashboard" allowedRoles={['administrator', 'admin']}>
     <div class="grid grid-cols-2 lg:grid-cols-4 gap-4 mb-6">
-        <div class="stat-card green bg-white rounded-xl p-4 border border-gray-100 card-hover">
+        <div class="stat-card green bg-white rounded-xl p-4 border border-gray-100 card-hover cursor-pointer" data-order-filter="today">
             <div class="flex items-center gap-3 mb-3">
                 <div class="w-10 h-10 rounded-lg bg-pri-50 flex items-center justify-center"><i class="fa-solid fa-money-bill-wave text-pri-600"></i></div>
                 <span class="text-xs text-gray-500 font-medium">Penjualan Hari Ini</span>
@@ -12,7 +12,7 @@ import TokoKirimLayout from '../layouts/TokoKirimLayout.astro';
             <p class="text-xl font-bold text-gray-900" id="stat-revenue"><span class="inline-block w-20 h-6 bg-gray-100 animate-pulse rounded"></span></p>
             <p class="text-xs text-gray-400 mt-1" id="stat-revenue-count"><span class="inline-block w-16 h-4 bg-gray-100 animate-pulse rounded"></span></p>
         </div>
-        <div class="stat-card amber bg-white rounded-xl p-4 border border-gray-100 card-hover">
+        <div class="stat-card amber bg-white rounded-xl p-4 border border-gray-100 card-hover cursor-pointer" data-order-filter="pending">
             <div class="flex items-center gap-3 mb-3">
                 <div class="w-10 h-10 rounded-lg bg-amber-50 flex items-center justify-center"><i class="fa-solid fa-clock text-amber-600"></i></div>
                 <span class="text-xs text-gray-500 font-medium">Menunggu Diproses</span>
@@ -20,7 +20,7 @@ import TokoKirimLayout from '../layouts/TokoKirimLayout.astro';
             <p class="text-xl font-bold text-gray-900" id="stat-pending"><span class="inline-block w-10 h-6 bg-gray-100 animate-pulse rounded"></span></p>
             <p class="text-xs text-gray-400 mt-1" id="stat-processing-count"><span class="inline-block w-16 h-4 bg-gray-100 animate-pulse rounded"></span></p>
         </div>
-        <div class="stat-card sky bg-white rounded-xl p-4 border border-gray-100 card-hover">
+        <div class="stat-card sky bg-white rounded-xl p-4 border border-gray-100 card-hover cursor-pointer" data-order-filter="processing">
             <div class="flex items-center gap-3 mb-3">
                 <div class="w-10 h-10 rounded-lg bg-sky-50 flex items-center justify-center"><i class="fa-solid fa-box-open text-sky-600"></i></div>
                 <span class="text-xs text-gray-500 font-medium">Diproses / Dikirim</span>
@@ -28,7 +28,7 @@ import TokoKirimLayout from '../layouts/TokoKirimLayout.astro';
             <p class="text-xl font-bold text-gray-900" id="stat-processing"><span class="inline-block w-10 h-6 bg-gray-100 animate-pulse rounded"></span></p>
             <p class="text-xs text-gray-400 mt-1">Pesanan on-going</p>
         </div>
-        <div class="stat-card rose bg-white rounded-xl p-4 border border-gray-100 card-hover">
+        <div class="stat-card rose bg-white rounded-xl p-4 border border-gray-100 card-hover cursor-pointer" data-order-filter="completed">
             <div class="flex items-center gap-3 mb-3">
                 <div class="w-10 h-10 rounded-lg bg-rose-50 flex items-center justify-center"><i class="fa-solid fa-check-circle text-rose-500"></i></div>
                 <span class="text-xs text-gray-500 font-medium">Selesai Hari Ini</span>
@@ -51,8 +51,16 @@ import TokoKirimLayout from '../layouts/TokoKirimLayout.astro';
         </div>
         <div class="lg:col-span-2 bg-white rounded-xl p-5 border border-gray-100 shadow-sm">
             <div class="flex items-center justify-between mb-4">
-                <h3 class="font-bold text-sm text-gray-900">Pesanan Terbaru</h3>
-                <button id="refresh-btn" class="text-xs text-pri-600 font-semibold hover:text-pri-700 transition"><i class="fa-solid fa-rotate-right mr-1" id="refresh-icon"></i>Segarkan</button>
+                <h3 id="orders" class="font-bold text-sm text-gray-900">Pesanan Terbaru</h3>
+                <div class="flex items-center gap-3">
+                    <select id="order-filter" class="rounded-lg border border-gray-200 px-2 py-1.5 text-xs text-gray-600">
+                        <option value="all">Semua</option>
+                        <option value="pending">Menunggu</option>
+                        <option value="processing">Diproses</option>
+                        <option value="completed">Selesai</option>
+                    </select>
+                    <button id="refresh-btn" class="text-xs text-pri-600 font-semibold hover:text-pri-700 transition"><i class="fa-solid fa-rotate-right mr-1" id="refresh-icon"></i>Segarkan</button>
+                </div>
             </div>
             <div class="overflow-x-auto">
                 <table class="w-full text-sm">
@@ -62,9 +70,10 @@ import TokoKirimLayout from '../layouts/TokoKirimLayout.astro';
                         <th class="pb-2 font-medium">Total</th>
                         <th class="pb-2 font-medium">Status</th>
                         <th class="pb-2 font-medium">Waktu</th>
+                        <th class="pb-2 font-medium text-right">Aksi</th>
                     </tr></thead>
                     <tbody id="orders-tbody">
-                        <tr><td colspan="5" class="py-10 text-center"><i class="fa-solid fa-circle-notch fa-spin text-pri-600 text-2xl mb-2"></i><p class="text-gray-400 text-xs mt-2">Memuat data pesanan...</p></td></tr>
+                        <tr><td colspan="6" class="py-10 text-center"><i class="fa-solid fa-circle-notch fa-spin text-pri-600 text-2xl mb-2"></i><p class="text-gray-400 text-xs mt-2">Memuat data pesanan...</p></td></tr>
                     </tbody>
                 </table>
             </div>
@@ -73,6 +82,7 @@ import TokoKirimLayout from '../layouts/TokoKirimLayout.astro';
 
     <script is:inline>
         let isFetching = false;
+        let currentFilter = 'all';
 
         function fmtRupiah(num) {
             const n = Number(num);
@@ -102,6 +112,58 @@ import TokoKirimLayout from '../layouts/TokoKirimLayout.astro';
             const d = new Date(dateStr);
             const now = new Date();
             return d.toISOString().split('T')[0] === now.toISOString().split('T')[0];
+        }
+
+        function renderOrders(orders) {
+            const tbody = document.getElementById('orders-tbody');
+            if (!tbody) return;
+
+            const filteredOrders = orders.filter((order) => {
+                if (currentFilter === 'today') return isToday(order.date_created);
+                if (currentFilter === 'pending') return order.status === 'pending' || order.status === 'on-hold';
+                return currentFilter === 'all' || order.status === currentFilter;
+            }).slice(0, 10);
+
+            if (filteredOrders.length === 0) {
+                tbody.innerHTML = '<tr><td colspan="6" class="py-10 text-center text-gray-400 text-xs">Tidak ada pesanan pada filter ini</td></tr>';
+                return;
+            }
+
+            tbody.innerHTML = filteredOrders.map(o => {
+                const nextStatus = o.status === 'pending' || o.status === 'on-hold' ? 'processing' : o.status === 'processing' ? 'completed' : '';
+                const actionLabel = nextStatus === 'processing' ? 'Proses' : nextStatus === 'completed' ? 'Selesaikan' : '';
+                const action = actionLabel
+                    ? `<button type="button" class="order-action rounded-lg bg-pri-50 px-2.5 py-1.5 text-[10px] font-bold text-pri-700 hover:bg-pri-100" data-order-id="${o.id}" data-next-status="${nextStatus}">${actionLabel}</button>`
+                    : '<span class="text-[10px] text-gray-400">Selesai</span>';
+                return `
+                    <tr class="border-b border-gray-50 hover:bg-gray-50/50">
+                        <td class="py-2.5 font-mono text-xs text-pri-700 font-semibold">#${o.id}</td>
+                        <td class="py-2.5"><div class="text-sm font-medium text-gray-900">${o.customer_name}</div><div class="text-[10px] text-gray-400">${o.phone}</div></td>
+                        <td class="py-2.5 font-semibold text-gray-900">${fmtRupiah(o.total)}</td>
+                        <td class="py-2.5">${statusBadge(o.status)}</td>
+                        <td class="py-2.5 text-xs text-gray-400">${fmtTime(o.date_created)}</td>
+                        <td class="py-2.5 text-right">${action}</td>
+                    </tr>`;
+            }).join('');
+        }
+
+        async function updateOrderStatus(orderId, nextStatus, button) {
+            button.disabled = true;
+            button.textContent = '...';
+            try {
+                const res = await fetch('/api/adminrisman/orders', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ orderId, status: nextStatus }),
+                });
+                const data = await res.json();
+                if (!res.ok || !data.success) throw new Error(data.message || 'Gagal memperbarui pesanan.');
+                await fetchDashboardData();
+            } catch (err) {
+                showError(err.message || 'Gagal memperbarui pesanan.');
+                button.disabled = false;
+                button.textContent = nextStatus === 'processing' ? 'Proses' : 'Selesaikan';
+            }
         }
 
         async function fetchDashboardData() {
@@ -165,22 +227,7 @@ import TokoKirimLayout from '../layouts/TokoKirimLayout.astro';
                     
                     payContainer.innerHTML = payHtml;
 
-                    // Render Table
-                    const tbody = document.getElementById('orders-tbody');
-                    const recentOrders = data.orders.slice(0, 10);
-                    if (recentOrders.length === 0) {
-                        tbody.innerHTML = '<tr><td colspan="5" class="py-10 text-center text-gray-400 text-xs">Belum ada pesanan</td></tr>';
-                    } else {
-                        tbody.innerHTML = recentOrders.map(o => `
-                            <tr class="border-b border-gray-50 hover:bg-gray-50/50">
-                                <td class="py-2.5 font-mono text-xs text-pri-700 font-semibold">#${o.id}</td>
-                                <td class="py-2.5"><div class="text-sm font-medium text-gray-900">${o.customer_name}</div><div class="text-[10px] text-gray-400">${o.phone}</div></td>
-                                <td class="py-2.5 font-semibold text-gray-900">${fmtRupiah(o.total)}</td>
-                                <td class="py-2.5">${statusBadge(o.status)}</td>
-                                <td class="py-2.5 text-xs text-gray-400">${fmtTime(o.date_created)}</td>
-                            </tr>
-                        `).join('');
-                    }
+                    renderOrders(data.orders);
 
                 } else {
                     showError('Gagal memuat data dari server.');
@@ -201,7 +248,24 @@ import TokoKirimLayout from '../layouts/TokoKirimLayout.astro';
         }
 
         document.getElementById('refresh-btn')?.addEventListener('click', fetchDashboardData);
+        document.getElementById('order-filter')?.addEventListener('change', (event) => {
+            currentFilter = event.target.value;
+            fetchDashboardData();
+        });
+        document.querySelectorAll('[data-order-filter]').forEach((card) => {
+            card.addEventListener('click', () => {
+                currentFilter = card.dataset.orderFilter;
+                const filter = document.getElementById('order-filter');
+                if (filter) filter.value = currentFilter === 'today' ? 'all' : currentFilter;
+                document.getElementById('orders')?.scrollIntoView({ behavior: 'smooth', block: 'start' });
+                fetchDashboardData();
+            });
+        });
+        document.getElementById('orders-tbody')?.addEventListener('click', (event) => {
+            const button = event.target.closest('.order-action');
+            if (button) updateOrderStatus(button.dataset.orderId, button.dataset.nextStatus, button);
+        });
         fetchDashboardData();
         setInterval(fetchDashboardData, 30000);
     </script>
-</TokoKirimLayout>
+</AdminDashboardLayout>
